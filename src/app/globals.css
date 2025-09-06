@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+:root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 84% 60%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 0 84% 60%;
+
+    /* Medical Theme Colors */
+    --medical-red: 0 84% 60%;
+    --medical-red-foreground: 0 0% 98%;
+    --medical-dark: 240 10% 3.9%;
+    --medical-dark-lighter: 240 3.7% 15.9%;
+    --medical-gray: 240 5% 64.9%;
+
+    /* Gradients */
+    --gradient-medical: linear-gradient(135deg, hsl(var(--medical-red)), hsl(0 84% 55%));
+    --gradient-dark: linear-gradient(180deg, hsl(var(--medical-dark)), hsl(240 10% 2%));
+
+    /* Shadows */
+    --shadow-medical: 0 10px 30px -10px hsl(var(--medical-red) / 0.3);
+    --shadow-dark: 0 4px 20px hsl(0 0% 0% / 0.5);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ---- Container (center + 2rem padding; 2xl = 1400px) ---- */
+.container {
+  margin-inline: auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  width: 100%;
+  max-width: 100%;
+}
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+/* ---- Color utilities (maps to your tokens) ---- */
+/* Base surfaces */
+.bg-background { background-color: hsl(var(--background)); }
+.text-foreground { color: hsl(var(--foreground)); }
+.border-border { border-color: hsl(var(--border)); }
+.bg-card { background-color: hsl(var(--card)); }
+.text-card-foreground { color: hsl(var(--card-foreground)); }
+.bg-popover { background-color: hsl(var(--popover)); }
+.text-popover-foreground { color: hsl(var(--popover-foreground)); }
+
+/* Inputs / ring */
+.bg-input { background-color: hsl(var(--input)); }
+.text-input { color: hsl(var(--input)); }
+.ring {
+  /* Emulates Tailwind ring(2px) using box-shadow */
+  box-shadow: 0 0 0 1px hsl(var(--ring));
+}
+
+/* Brand/semantic */
+.bg-primary { background-color: hsl(var(--primary)); }
+.text-primary-foreground { color: hsl(var(--primary-foreground)); }
+
+.bg-secondary { background-color: hsl(var(--secondary)); }
+.text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
+
+.bg-destructive { background-color: hsl(var(--destructive)); }
+.text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
+
+.bg-muted { background-color: hsl(var(--muted)); }
+.text-muted-foreground { color: hsl(var(--muted-foreground)); }
+
+.bg-accent { background-color: hsl(var(--accent)); }
+.text-accent-foreground { color: hsl(var(--accent-foreground)); }
+
+/* Sidebar palette */
+.bg-sidebar { background-color: hsl(var(--sidebar-background)); }
+.text-sidebar-foreground { color: hsl(var(--sidebar-foreground)); }
+.bg-sidebar-primary { background-color: hsl(var(--sidebar-primary)); }
+.text-sidebar-primary-foreground { color: hsl(var(--sidebar-primary-foreground)); }
+.bg-sidebar-accent { background-color: hsl(var(--sidebar-accent)); }
+.text-sidebar-accent-foreground { color: hsl(var(--sidebar-accent-foreground)); }
+.border-sidebar { border-color: hsl(var(--sidebar-border)); }
+
+/* Medical palette */
+.bg-medical-red { background-color: hsl(var(--medical-red)); }
+.text-medical-red { color: hsl(var(--medical-red)); }
+.text-medical-red-foreground { color: hsl(var(--medical-red-foreground)); }
+.border-medical-red { border-color: hsl(var(--medical-red));}
+[data-state="checked"].bg-medical-red {
+  background-color: hsl(var(--medical-red));
+}
+.bg-medical-dark { background-color: hsl(var(--medical-dark)); }
+.bg-medical-dark-lighter { background-color: hsl(var(--medical-dark-lighter)); }
+.bg-medical-gray { background-color: hsl(var(--medical-gray)); }
+
+/* ---- Border radius (uses your --radius token) ---- */
+.rounded-lg { border-radius: var(--radius); }
+.rounded-md { border-radius: calc(var(--radius) - 2px); }
+.rounded-sm { border-radius: calc(var(--radius) - 4px); }
+
+/* ---- Accordion animations (from your keyframes) ---- */
+@keyframes accordion-down {
+  from { height: 0; }
+  to   { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to   { height: 0; }
+}
+.animate-accordion-down { animation: accordion-down 0.2s ease-out; }
+.animate-accordion-up { animation: accordion-up 0.2s ease-out; }
+
+/* ---- Helpful shorthands often used alongside tokens ---- */
+.bg-transparent { background-color: transparent; }
+.text-inherit { color: inherit; }
+.border { border-width: 1px; border-style: solid; }
+.focus-visible\:ring-ring:focus-visible {
+    --tw-ring-color: hsl(var(--ring));
+}
+.ring-offset-background {
+    --tw-ring-offset-color: hsl(var(--background));
+}
+
+.focus-visible\:ring-offset-2 {
+    &:focus-visible {
+      --tw-ring-offset-width: 2px;
+      --tw-ring-offset-shadow: var(--tw-ring-inset,) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    }
+  }
+
+.data-\[state\=checked\]\:bg-medical-red[data-state=checked] {
+    background-color: hsl(var(--medical-red));
+}  
