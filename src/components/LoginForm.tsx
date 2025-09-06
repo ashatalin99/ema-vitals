@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { User, Lock } from "lucide-react";
+import Image from "next/image";
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
@@ -21,8 +22,10 @@ const LoginForm = () => {
   return (
     <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-medical-red mb-8">
-            Vitals Login
+          <h1 className="text-[40px] font-bold text-medical-red mb-8 flex items-center justify-center gap-2">
+            ema
+            <Image src="/ema-logo.png" alt="ema logo" width={32} height={32} />
+            telemed
           </h1>
         </div>
         <Card className="bg-medical-dark-lighter border-0">

@@ -4,8 +4,8 @@
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0 12%;
+    --card-foreground: 0 0% 95%;
 
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
@@ -25,9 +25,10 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
+    --border: 0 0 20%;
     --input: 240 3.7% 15.9%;
     --ring: 0 84% 60%;
+    --selected-row: 142 40% 20%;
 
     /* Medical Theme Colors */
     --medical-red: 0 84% 60%;
@@ -179,3 +180,15 @@ body {
 .data-\[state\=checked\]\:bg-medical-red[data-state=checked] {
     background-color: hsl(var(--medical-red));
 }  
+
+.hover\:bg-muted\/50:hover {
+    background-color: hsl(var(--muted) / .5);
+}
+
+.border-l-primary {
+    border-left-color: hsl(var(--primary));
+}
+
+.bg-selected-row {
+    background-color: hsl(var(--selected-row));
+}
