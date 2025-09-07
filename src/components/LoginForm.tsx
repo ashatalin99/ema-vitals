@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { User, Lock } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-
+  const router = useRouter();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Login attempt:", { username, password, rememberMe });
@@ -92,6 +93,7 @@ const LoginForm = () => {
                 variant="medical"
                 size="lg"
                 className="w-full h-12 text-base"
+                onClick={() => router.push('/residents')}
               >
                 Login
               </Button>
