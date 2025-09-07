@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface Resident {
   id: string;
@@ -57,6 +58,21 @@ const SingleResidentPage = () => {
   ]);
 
   const [observationMethod, setObservationMethod] = useState('sitting-left-arm');
+  const [painLevel, setPainLevel] = useState<number | null>(null);
+
+  const painLevels = [
+    { value: 0, emoji: '😊', label: 'No Pain', color: 'bg-green-100 border-green-300 text-green-800' },
+    { value: 1, emoji: '🙂', label: 'Slight', color: 'bg-green-100 border-green-300 text-green-800' },
+    { value: 2, emoji: '😐', label: 'Mild', color: 'bg-yellow-100 border-yellow-300 text-yellow-800' },
+    { value: 3, emoji: '😕', label: 'Uncomfortable', color: 'bg-yellow-100 border-yellow-300 text-yellow-800' },
+    { value: 4, emoji: '😟', label: 'Moderate', color: 'bg-orange-100 border-orange-300 text-orange-800' },
+    { value: 5, emoji: '😣', label: 'Annoying', color: 'bg-orange-100 border-orange-300 text-orange-800' },
+    { value: 6, emoji: '😖', label: 'Distressing', color: 'bg-red-100 border-red-300 text-red-800' },
+    { value: 7, emoji: '😫', label: 'Strong', color: 'bg-red-100 border-red-300 text-red-800' },
+    { value: 8, emoji: '😭', label: 'Intense', color: 'bg-red-200 border-red-400 text-red-900' },
+    { value: 9, emoji: '😱', label: 'Severe', color: 'bg-red-200 border-red-400 text-red-900' },
+    { value: 10, emoji: '🤯', label: 'Worst', color: 'bg-red-300 border-red-500 text-red-950' },
+  ];
 
   const toggleVital = (vitalId: string) => {
     setVitals(prev => prev.map(vital => 
@@ -190,6 +206,39 @@ const SingleResidentPage = () => {
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
+                  </Card>
+                )}
+                {/* Pain Assessment Levels */}
+                {vitals.find(v => v.id === 'pain-assessment')?.selected && (
+                  <Card className="p-6 shadow-medium mt-6">
+                    <h3 className="text-xl font-bold text-foreground">Pain Level Assessment</h3>
+                    <div className="mb-6">
+                      <Label className="text-lg font-medium text-foreground mb-4 block text-pink-500">
+                        Pain Level: {painLevel !== null ? `${painLevel} - ${painLevels[painLevel].label}` : 'Not Selected'}
+                      </Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 text-white">
+                        {painLevels.map((level) => (
+                          <button
+                            key={level.value}
+                            onClick={() => setPainLevel(level.value)}
+                            className={`p-4 rounded-lg border-2 transition-all duration-200 text-center hover:scale-105 ${
+                              painLevel === level.value 
+                                ? `${level.color} scale-105 shadow-md` 
+                                : 'bg-background border-border hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className="text-3xl mb-2">{level.emoji}</div>
+                            <div className="text-sm font-medium">{level.value}</div>
+                            <div className="text-xs">{level.label}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Select the number that best describes your pain level (0 = No Pain, 10 = Worst Pain)
+                      </p>
                     </div>
                   </Card>
                 )}
