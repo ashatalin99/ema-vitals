@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
-import { useRouter, usePathname, useParams } from 'next/navigation';
-import {  Home, Users, UserCheck, HelpCircle, Settings, User, LogOut, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
+import { LogOut, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -9,11 +9,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { IconSpO2, IconRespiration, IconBloodGlucose, IconWeight, IconHeight, IconBloodPressure, IconTemperature } from '@/components/icons/icons';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Sidebar } from '@/components/Sidebar';
 import { useToast } from '@/hooks/use-toast';
-
+import Image from 'next/image';
 interface Resident {
   id: string;
   name: string;
@@ -39,16 +39,6 @@ const mockResidents: Resident[] = [
   { id: '7', name: 'Albertson, Florentin', dob: '02-02-2029', location: 'Main 415 - B', exId: '9953' },
 ];
 
-const sidebarItems = [
-  { icon: Home, label: 'Home', active: true, link: '/home' },
-  { icon: Users, label: 'Residents', active: false, link: '/residents' },
-  { icon: UserCheck, label: 'Care', active: false, link: '/care' },
-  { icon: HelpCircle, label: 'Help', active: false, link: '/help' },
-  { icon: Settings, label: 'Settings', active: false, link: '/settings' },
-];
-
-
-
 const SingleResidentPage = () => {
   const router = useRouter();
   const { toast } = useToast();
@@ -71,16 +61,67 @@ const SingleResidentPage = () => {
   const [selectedVitalForEdit, setSelectedVitalForEdit] = useState<string | null>(null);
   const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
   const [showVitalsPanel, setShowVitalsPanel] = useState(true);
-  const [vitalReadings, setVitalReadings] = useState<{[key: string]: any}>({
-    'blood-pressure': { device: 'Omron BP7350', reading: '118/88 PR 81', timestamp: new Date() },
-    'temperature': { device: 'ThermoScan Pro', reading: '98.6°F', timestamp: new Date() },
-    'spo2': { device: 'Pulse Oximeter', reading: '98% PR 72', timestamp: new Date() },
-    'weight': { device: 'Digital Scale', reading: '165.2 lbs', timestamp: new Date() },
-    'blood-glucose': { device: 'Glucometer', reading: '95 mg/dL', timestamp: new Date() },
-    'respiration': { device: 'Chest Monitor', reading: '16 bpm', timestamp: new Date() },
-    'height': { device: 'Stadiometer', reading: '5\'8"', timestamp: new Date() },
-    'pain-assessment': { device: 'Manual Assessment', reading: '3/10', timestamp: new Date() }
-  });
+
+  interface VitalReading {
+    device: string;
+    reading: string;
+    timestamp: Date;
+  }
+
+  type VitalKey =
+  | "blood-pressure"
+  | "temperature"
+  | "spo2"
+  | "weight"
+  | "blood-glucose"
+  | "respiration"
+  | "height"
+  | "pain-assessment";
+
+type VitalReadings = Record<VitalKey, VitalReading>;
+
+  const [vitalReadings, setVitalReadings] = useState<VitalReadings>({
+  "blood-pressure": {
+    device: "Omron BP7350",
+    reading: "118/88 PR 81",
+    timestamp: new Date(),
+  },
+  temperature: {
+    device: "ThermoScan Pro",
+    reading: "98.6°F",
+    timestamp: new Date(),
+  },
+  spo2: {
+    device: "Pulse Oximeter",
+    reading: "98% PR 72",
+    timestamp: new Date(),
+  },
+  weight: {
+    device: "Digital Scale",
+    reading: "165.2 lbs",
+    timestamp: new Date(),
+  },
+  "blood-glucose": {
+    device: "Glucometer",
+    reading: "95 mg/dL",
+    timestamp: new Date(),
+  },
+  respiration: {
+    device: "Chest Monitor",
+    reading: "16 bpm",
+    timestamp: new Date(),
+  },
+  height: {
+    device: "Stadiometer",
+    reading: "5'8\"",
+    timestamp: new Date(),
+  },
+  "pain-assessment": {
+    device: "Manual Assessment",
+    reading: "3/10",
+    timestamp: new Date(),
+  },
+});
 
   const painLevels = [
     { value: 0, emoji: '😊', label: 'No Pain', color: 'bg-green-100 border-green-300 text-green-800' },
@@ -105,7 +146,7 @@ const SingleResidentPage = () => {
     ));
   };
 
-  const updateVitalReading = (vitalId: string, field: string, value: string) => {
+  const updateVitalReading = (vitalId: VitalKey, field: string, value: string) => {
     setVitalReadings(prev => ({
       ...prev,
       [vitalId]: {
@@ -122,7 +163,7 @@ const SingleResidentPage = () => {
       <div className="w-20 bg-card border-r border-border flex flex-col items-center py-4 shadow-soft">
         <div className="mb-8">
           <div className="w-12 h-12">
-            <img src="/ema-logo.png" alt="ema logo" />
+            <Image src="/ema-logo.png" alt="ema logo" width={40} height={40} />
           </div>
         </div>
         <Sidebar />
@@ -194,8 +235,8 @@ const SingleResidentPage = () => {
                       const selectedVitals = vitals.filter(v => v.selected);
                       if (selectedVitals.length > 0) {
                         setSelectedVitalForEdit(selectedVitals[0].id);
-                        setManualDevice(vitalReadings[selectedVitals[0].id]?.device || '');
-                        setManualReading(vitalReadings[selectedVitals[0].id]?.reading || '');
+                        setManualDevice(vitalReadings[selectedVitals[0].id as VitalKey]?.device || '');
+                        setManualReading(vitalReadings[selectedVitals[0].id as VitalKey]?.reading || '');
                         setIsDialogOpen(true);
                       }
                     }} 
@@ -475,7 +516,7 @@ const SingleResidentPage = () => {
                     } catch (error) {
                       toast({
                         title: "Error",
-                        description: "Failed to submit vital measurements. Please try again.",
+                        description: `${error} Failed to submit vital measurements. Please try again.`,
                         variant: "destructive",
                       });
                     }
@@ -500,8 +541,8 @@ const SingleResidentPage = () => {
               <Label htmlFor="vital-select">Select Vital</Label>
               <Select value={selectedVitalForEdit || ''} onValueChange={(value) => {
                 setSelectedVitalForEdit(value);
-                setManualDevice(vitalReadings[value]?.device || '');
-                setManualReading(vitalReadings[value]?.reading || '');
+                setManualDevice(vitalReadings[value as VitalKey]?.device || '');
+                setManualReading(vitalReadings[value as VitalKey]?.reading || '');
               }}>
                 <SelectTrigger className="mt-1 border-border">
                   <SelectValue placeholder="Select a vital to edit" />
@@ -549,8 +590,8 @@ const SingleResidentPage = () => {
               <Button 
                 onClick={() => {
                 if (selectedVitalForEdit && manualDevice && manualReading) {
-                  updateVitalReading(selectedVitalForEdit, 'device', manualDevice);
-                  updateVitalReading(selectedVitalForEdit, 'reading', manualReading);
+                  updateVitalReading(selectedVitalForEdit as VitalKey, 'device', manualDevice);
+                  updateVitalReading(selectedVitalForEdit as VitalKey, 'reading', manualReading);
                   setIsDialogOpen(false);
                   setManualDevice('');
                   setManualReading('');

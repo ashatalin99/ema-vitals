@@ -1,13 +1,15 @@
 "use client";
 import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { Search, Home, Users, UserCheck, HelpCircle, Settings, User, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Home, Users, UserCheck, HelpCircle, Settings, LogOut} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Sidebar } from '@/components/Sidebar';
+import Image from 'next/image';
+
 interface Resident {
   id: string;
   name: string;
@@ -24,14 +26,6 @@ const mockResidents: Resident[] = [
   { id: '5', name: 'Adcock, Linnea', dob: '09-14-2018', location: 'Main 214 - A', exId: '2054' },
   { id: '6', name: 'Akin, Jarrod', dob: '05-05-1943', location: 'Main 201 - B', exId: '2440' },
   { id: '7', name: 'Albertson, Florentin', dob: '02-02-2029', location: 'Main 415 - B', exId: '9953' },
-];
-
-const sidebarItems = [
-  { icon: Home, label: 'Home', active: true },
-  { icon: Users, label: 'Residents', active: false },
-  { icon: UserCheck, label: 'Care', active: false },
-  { icon: HelpCircle, label: 'Help', active: false },
-  { icon: Settings, label: 'Settings', active: false },
 ];
 
 const ResidentsPage = () => {
@@ -63,7 +57,7 @@ const ResidentsPage = () => {
       <div className="w-20 bg-card border-r border-border flex flex-col items-center py-4 shadow-soft">
         <div className="mb-8">
           <div className="w-12 h-12">
-            <img src="/ema-logo.png" alt="ema logo" />
+            <Image src="/ema-logo.png" alt="ema logo" width={40} height={40} />
           </div>
         </div>
         <Sidebar />
