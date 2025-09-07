@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Home, Users, UserCheck, HelpCircle, Settings, User, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,7 @@ const sidebarItems = [
 ];
 
 const ResidentsPage = () => {
+  const router = useRouter();
   const [selectedResident, setSelectedResident] = useState<string>('6');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -140,7 +142,10 @@ const ResidentsPage = () => {
                   {paginatedResidents.map((resident) => (
                     <div
                       key={resident.id}
-                      onClick={() => setSelectedResident(resident.id)}
+                      onClick={() => {
+                        setSelectedResident(resident.id);
+                        router.push(`/residents/${resident.id}`);
+                    }}
                       className={`px-6 py-4 border-b border-border cursor-pointer transition-all duration-200 ${
                         selectedResident === resident.id
                           ? 'bg-selected-row border-l-4 border-l-primary'

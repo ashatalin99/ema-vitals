@@ -192,3 +192,11 @@ body {
 .bg-selected-row {
     background-color: hsl(var(--selected-row));
 }
+
+.data-\[state\=checked\]\:bg-primary[data-state=checked] {
+    background-color: hsl(var(--primary));
+}
+
+.border-primary {
+    border-color: hsl(var(--primary));
+}
