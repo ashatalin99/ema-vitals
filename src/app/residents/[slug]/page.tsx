@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useParams } from 'next/navigation';
 import {  Home, Users, UserCheck, HelpCircle, Settings, User, LogOut, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { IconSpO2, IconRespiration, IconBloodGlucose, IconWeight, IconHeight, IconBloodPressure, IconTemperature } from '@/components/icons/icons';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Sidebar } from '@/components/Sidebar';
+import { useToast } from '@/hooks/use-toast';
 
 interface Resident {
   id: string;
@@ -36,17 +40,18 @@ const mockResidents: Resident[] = [
 ];
 
 const sidebarItems = [
-  { icon: Home, label: 'Home', active: true },
-  { icon: Users, label: 'Residents', active: false },
-  { icon: UserCheck, label: 'Care', active: false },
-  { icon: HelpCircle, label: 'Help', active: false },
-  { icon: Settings, label: 'Settings', active: false },
+  { icon: Home, label: 'Home', active: true, link: '/home' },
+  { icon: Users, label: 'Residents', active: false, link: '/residents' },
+  { icon: UserCheck, label: 'Care', active: false, link: '/care' },
+  { icon: HelpCircle, label: 'Help', active: false, link: '/help' },
+  { icon: Settings, label: 'Settings', active: false, link: '/settings' },
 ];
 
 
 
 const SingleResidentPage = () => {
   const router = useRouter();
+  const { toast } = useToast();
   const [vitals, setVitals] = useState<VitalType[]>([
     { id: 'blood-pressure', name: 'Blood Pressure', color: 'text-red-500', selected: true },
     { id: 'temperature', name: 'Temperature', color: 'text-orange-500', selected: false },
@@ -60,6 +65,22 @@ const SingleResidentPage = () => {
 
   const [observationMethod, setObservationMethod] = useState('sitting-left-arm');
   const [painLevel, setPainLevel] = useState<number | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [manualDevice, setManualDevice] = useState('');
+  const [manualReading, setManualReading] = useState('');
+  const [selectedVitalForEdit, setSelectedVitalForEdit] = useState<string | null>(null);
+  const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
+  const [showVitalsPanel, setShowVitalsPanel] = useState(true);
+  const [vitalReadings, setVitalReadings] = useState<{[key: string]: any}>({
+    'blood-pressure': { device: 'Omron BP7350', reading: '118/88 PR 81', timestamp: new Date() },
+    'temperature': { device: 'ThermoScan Pro', reading: '98.6°F', timestamp: new Date() },
+    'spo2': { device: 'Pulse Oximeter', reading: '98% PR 72', timestamp: new Date() },
+    'weight': { device: 'Digital Scale', reading: '165.2 lbs', timestamp: new Date() },
+    'blood-glucose': { device: 'Glucometer', reading: '95 mg/dL', timestamp: new Date() },
+    'respiration': { device: 'Chest Monitor', reading: '16 bpm', timestamp: new Date() },
+    'height': { device: 'Stadiometer', reading: '5\'8"', timestamp: new Date() },
+    'pain-assessment': { device: 'Manual Assessment', reading: '3/10', timestamp: new Date() }
+  });
 
   const painLevels = [
     { value: 0, emoji: '😊', label: 'No Pain', color: 'bg-green-100 border-green-300 text-green-800' },
@@ -74,11 +95,25 @@ const SingleResidentPage = () => {
     { value: 9, emoji: '😱', label: 'Severe', color: 'bg-red-200 border-red-400 text-red-900' },
     { value: 10, emoji: '🤯', label: 'Worst', color: 'bg-red-300 border-red-500 text-red-950' },
   ];
+  
+  const { id } = useParams<{ id: string }>();
+  const resident = mockResidents.find(r => r.id === id);
 
   const toggleVital = (vitalId: string) => {
     setVitals(prev => prev.map(vital => 
       vital.id === vitalId ? { ...vital, selected: !vital.selected } : vital
     ));
+  };
+
+  const updateVitalReading = (vitalId: string, field: string, value: string) => {
+    setVitalReadings(prev => ({
+      ...prev,
+      [vitalId]: {
+        ...prev[vitalId],
+        [field]: value,
+        timestamp: new Date()
+      }
+    }));
   };
 
   return (
@@ -90,21 +125,7 @@ const SingleResidentPage = () => {
             <img src="/ema-logo.png" alt="ema logo" />
           </div>
         </div>
-        
-        <nav className="flex-1 flex flex-col gap-4">
-          {sidebarItems.map((item, index) => (
-            <button
-              key={index}
-              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 ${
-                item.active 
-                  ? 'bg-primary text-primary-foreground shadow-medium' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
-            >
-              <item.icon className="w-6 h-6" />
-            </button>
-          ))}
-        </nav>
+        <Sidebar />
       </div>
 
       {/* Main Content */}
@@ -145,8 +166,8 @@ const SingleResidentPage = () => {
                 </Button>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">John Smith</h1>
-                <p className="text-muted-foreground"><span className="text-red-500">DOB: </span>05/09/1943 • <span className="text-orange-500">Main 201 - B</span> • <span className="text-blue-500">ID: </span>EX001</p>
+                <h1 className="text-3xl font-bold text-foreground">Abreu Shari</h1>
+                <p className="text-muted-foreground"><span className="text-red-500">DOB: </span>11/25/1953 • <span className="text-orange-500">Main 418 - C</span> • <span className="text-blue-500">ID: </span>7557</p>
               </div>
             </div>
             <div>
@@ -155,40 +176,67 @@ const SingleResidentPage = () => {
                   <h2 className="text-2xl font-bold text-foreground">Select Vitals</h2>
                   <p className="text-muted-foreground">Choose which vitals to measure for this resident</p>
                 </div>
-                <div>
-                  <Button variant="destructive" size="sm" className="gap-2">
+                <div className='flex gap-3'>
+                  {vitalsSubmitted && (
+                    <Button 
+                      onClick={() => {
+                        setShowVitalsPanel(true);
+                        setVitalsSubmitted(false);
+                      }}
+                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md font-medium"
+                    >
+                      Start New Measurement
+                    </Button>
+                  )}
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => {
+                      const selectedVitals = vitals.filter(v => v.selected);
+                      if (selectedVitals.length > 0) {
+                        setSelectedVitalForEdit(selectedVitals[0].id);
+                        setManualDevice(vitalReadings[selectedVitals[0].id]?.device || '');
+                        setManualReading(vitalReadings[selectedVitals[0].id]?.reading || '');
+                        setIsDialogOpen(true);
+                      }
+                    }} 
+                    className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md font-medium"
+                    disabled={!vitals.some(v => v.selected)} 
+                    >
                     Manual Entry
                   </Button>
                 </div>
               </div>
               {/* Vitals Grid */}
-              <Card className="p-6 shadow-medium border-border">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {vitals.map((vital) => (
-                    <div 
-                      key={vital.id}
-                      onClick={() => toggleVital(vital.id)}
-                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-all duration-200"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`text-2xl font-bold ${vital.color}`}>
-                          {vital.name}
+              {showVitalsPanel && !vitalsSubmitted && (
+                <Card className="p-6 shadow-medium border-border">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {vitals.map((vital) => (
+                      <div 
+                        key={vital.id}
+                        onClick={() => toggleVital(vital.id)}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`text-2xl font-bold ${vital.color}`}>
+                            {vital.name}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <Checkbox 
+                            checked={vital.selected}
+                            onCheckedChange={() => toggleVital(vital.id)}
+                            className="w-6 h-6 text-white"
+                          />
                         </div>
                       </div>
-                      
-                      <div className="flex items-center">
-                        <Checkbox 
-                          checked={vital.selected}
-                          onCheckedChange={() => toggleVital(vital.id)}
-                          className="w-6 h-6 text-white"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+                    ))}
+                  </div>
+                </Card>
+              )}
+              
               {/* Blood Pressure Observation Method */}
-              {vitals.find(v => v.id === 'blood-pressure')?.selected && (
+              {showVitalsPanel && !vitalsSubmitted && vitals.find(v => v.id === 'blood-pressure')?.selected && (
                   <Card className="p-6 shadow-medium mt-6 border-border">
                     <h3 className="text-xl font-bold text-foreground mb-6">Blood Pressure Observation Method</h3>
                     <div className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-all duration-200">
@@ -218,7 +266,7 @@ const SingleResidentPage = () => {
                   </Card>
               )}
               {/* Pain Assessment Levels */}
-              {vitals.find(v => v.id === 'pain-assessment')?.selected && (
+              {showVitalsPanel && !vitalsSubmitted && vitals.find(v => v.id === 'pain-assessment')?.selected && (
                 <Card className="p-6 shadow-medium mt-6 border-border">
                   <h3 className="text-xl font-bold text-foreground">Pain Level Assessment</h3>
                   <div className="mb-6">
@@ -262,8 +310,8 @@ const SingleResidentPage = () => {
                             iconBg: 'bg-red-400',
                             icon: <IconBloodPressure className="w-6 h-6 text-primary" />,
                             abbreviation: 'BLOOD PRESSURE',
-                            device: 'Omron BP7350',
-                            reading: '118/88 PR 81',
+                            device: vitalReadings[vitalId]?.device || 'Omron BP7350',
+                            reading: vitalReadings[vitalId]?.reading || '118/88 PR 81',
                             unit: 'SYS/DIA mmHg'
                           };
                         case 'temperature':
@@ -272,8 +320,8 @@ const SingleResidentPage = () => {
                             iconBg: 'bg-orange-400',
                             icon: <IconTemperature className="w-6 h-6 text-primary" />,
                             abbreviation: 'TEMPERATURE',
-                            device: 'ThermoScan Pro',
-                            reading: '98.6°F',
+                            device: vitalReadings[vitalId]?.device || 'ThermoScan Pro',
+                            reading: vitalReadings[vitalId]?.reading || '98.6°F',
                             unit: 'Body Temperature'
                           };
                         case 'spo2':
@@ -282,8 +330,8 @@ const SingleResidentPage = () => {
                             iconBg: 'bg-blue-400',
                             icon: <IconSpO2 className="w-6 h-6 text-primary" />,
                             abbreviation: 'SpO2',
-                            device: 'Pulse Oximeter',
-                            reading: '98% PR 72',
+                            device: vitalReadings[vitalId]?.device || 'Pulse Oximeter',
+                            reading: vitalReadings[vitalId]?.reading || '98% PR 72',
                             unit: 'Oxygen Saturation'
                           };
                         case 'weight':
@@ -291,9 +339,9 @@ const SingleResidentPage = () => {
                             bg: 'bg-green-500',
                             iconBg: 'bg-green-400',
                             icon: <IconWeight className="w-6 h-6 text-primary" />,
-                            abbreviation: 'WT',
-                            device: 'Digital Scale',
-                            reading: '165.2 lbs',
+                            abbreviation: 'WEIGHT',
+                            device: vitalReadings[vitalId]?.device || 'Digital Scale',
+                            reading: vitalReadings[vitalId]?.reading || '165.2 lbs',
                             unit: 'Body Weight'
                           };
                         case 'blood-glucose':
@@ -302,8 +350,8 @@ const SingleResidentPage = () => {
                             iconBg: 'bg-purple-400',
                             icon: <IconBloodGlucose className="w-6 h-6 text-primary" />,
                             abbreviation: 'BG',
-                            device: 'Glucometer',
-                            reading: '95 mg/dL',
+                            device: vitalReadings[vitalId]?.device || 'Glucometer',
+                            reading: vitalReadings[vitalId]?.reading || '95 mg/dL',
                             unit: 'Blood Sugar'
                           };
                         case 'respiration':
@@ -312,8 +360,8 @@ const SingleResidentPage = () => {
                             iconBg: 'bg-cyan-400',
                             icon: <IconRespiration className="w-6 h-6 text-primary" />,
                             abbreviation: 'RESPIRATION',
-                            device: 'Chest Monitor',
-                            reading: '16 bpm',
+                            device: vitalReadings[vitalId]?.device || 'Chest Monitor',
+                            reading: vitalReadings[vitalId]?.reading || '16 bpm',
                             unit: 'Breathing Rate'
                           };
                         case 'height':
@@ -322,8 +370,8 @@ const SingleResidentPage = () => {
                             iconBg: 'bg-teal-400',
                             icon: <IconHeight className="w-6 h-6 text-primary" />,
                             abbreviation: 'HT',
-                            device: 'Height Meter',
-                            reading: '5\'8"',
+                            device: vitalReadings[vitalId]?.device || 'Height Meter',
+                            reading: vitalReadings[vitalId]?.reading || '5\'8"',
                             unit: 'Body Height'
                           };
                         case 'pain-assessment':
@@ -400,25 +448,121 @@ const SingleResidentPage = () => {
               )}
             </div>
             {/* Action Buttons */}
-            <div className="flex justify-center gap-4 mt-8">
+            {showVitalsPanel && !vitalsSubmitted && (
+              <div className="flex justify-center gap-4 mt-8">
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  className='border-border text-white px-8'
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  size="lg"
+                  className="px-8"
+                  disabled={!vitals.some(v => v.selected)}
+                  onClick={() => {
+                    console.log("Toast firing...");
+                    try {
+                      const selectedCount = vitals.filter(v => v.selected).length;
+                      console.log(`${resident?.name}`);
+                      setVitalsSubmitted(true);
+                      setShowVitalsPanel(false);
+                      toast({
+                        title: "Success",
+                        description: `Successfully submitted ${selectedCount} vital measurement${selectedCount !== 1 ? 's' : ''} for ${resident?.name}`,
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to submit vital measurements. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Submit Vital Measurements
+                </Button>
+              </div>
+            )}
+            
+          </div>
+        </div>
+      </div>
+      {/* Manual Entry Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md border-border text-white bg-[#151515]">
+          <DialogHeader>
+            <DialogTitle>Manual Entry - {selectedVitalForEdit && vitals.find(v => v.id === selectedVitalForEdit)?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="vital-select">Select Vital</Label>
+              <Select value={selectedVitalForEdit || ''} onValueChange={(value) => {
+                setSelectedVitalForEdit(value);
+                setManualDevice(vitalReadings[value]?.device || '');
+                setManualReading(vitalReadings[value]?.reading || '');
+              }}>
+                <SelectTrigger className="mt-1 border-border">
+                  <SelectValue placeholder="Select a vital to edit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vitals.filter(v => v.selected).map((vital) => (
+                    <SelectItem key={vital.id} value={vital.id}>{vital.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="reading-value">Device Name</Label>
+              <Input
+                id="device-name"
+                value={manualDevice}
+                onChange={(e) => setManualDevice(e.target.value)}
+                placeholder="Enter device name"
+                className="mt-1 border-border"
+              />
+            </div>
+            <div>
+              <Label htmlFor="reading-value">Reading Value</Label>
+              <Input
+                id="reading-value"
+                value={manualReading}
+                onChange={(e) => setManualReading(e.target.value)}
+                placeholder="Enter reading value"
+                className="mt-1 border-border"
+              />
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
               <Button 
                 variant="outline" 
-                size="lg"
-                className='border-border text-white px-8'
+                  onClick={() => {
+                  setIsDialogOpen(false);
+                  setManualDevice('');
+                  setManualReading('');
+                  setSelectedVitalForEdit(null);
+                }} 
+                className='border-border text-white'
               >
                 Cancel
               </Button>
               <Button 
-                size="lg"
-                className="px-8"
-                disabled={!vitals.some(v => v.selected)}
-              >
-                Submit Vital Measurements
+                onClick={() => {
+                if (selectedVitalForEdit && manualDevice && manualReading) {
+                  updateVitalReading(selectedVitalForEdit, 'device', manualDevice);
+                  updateVitalReading(selectedVitalForEdit, 'reading', manualReading);
+                  setIsDialogOpen(false);
+                  setManualDevice('');
+                  setManualReading('');
+                  setSelectedVitalForEdit(null);
+                }
+              }}>
+                Save
               </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

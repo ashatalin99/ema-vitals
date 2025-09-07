@@ -1,13 +1,13 @@
 "use client";
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, Home, Users, UserCheck, HelpCircle, Settings, User, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-
+import { Sidebar } from '@/components/Sidebar';
 interface Resident {
   id: string;
   name: string;
@@ -36,7 +36,7 @@ const sidebarItems = [
 
 const ResidentsPage = () => {
   const router = useRouter();
-  const [selectedResident, setSelectedResident] = useState<string>('6');
+  const [selectedResident, setSelectedResident] = useState<string>('1');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 10;
@@ -66,21 +66,7 @@ const ResidentsPage = () => {
             <img src="/ema-logo.png" alt="ema logo" />
           </div>
         </div>
-        
-        <nav className="flex-1 flex flex-col gap-4">
-          {sidebarItems.map((item, index) => (
-            <button
-              key={index}
-              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 ${
-                item.active 
-                  ? 'bg-primary text-primary-foreground shadow-medium' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
-            >
-              <item.icon className="w-6 h-6" />
-            </button>
-          ))}
-        </nav>
+        <Sidebar />
       </div>
 
       {/* Main Content */}
