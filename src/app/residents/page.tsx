@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, LogOut} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Header } from '@/components/Header';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Sidebar } from '@/components/Sidebar';
-import Image from 'next/image';
+
 
 interface Resident {
   id: string;
@@ -54,36 +54,12 @@ const ResidentsPage = () => {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
-      <div className="w-20 bg-card border-r border-border flex flex-col items-center py-4 shadow-soft">
-        <div className="mb-8">
-          <div className="w-12 h-12">
-            <Image src="/ema-logo.png" alt="ema logo" width={40} height={40} />
-          </div>
-        </div>
-        <Sidebar />
-      </div>
+      <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4 shadow-soft">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-10 h-10">
-                <AvatarFallback className="bg-primary text-primary-foreground">CW</AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="font-semibold text-foreground">Chloe Williams, LPN</h2>
-                <p className="text-sm text-muted-foreground">Licensed Practical Nurse</p>
-              </div>
-            </div>
-            
-            <Button variant="destructive" size="sm" className="gap-2">
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
-          </div>
-        </header>
+        <Header />
 
         {/* Content Area */}
         <div className="flex-1 p-6">

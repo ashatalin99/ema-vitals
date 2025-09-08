@@ -1,19 +1,33 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { LogOut, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Edit3, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { IconSpO2, IconRespiration, IconBloodGlucose, IconWeight, IconHeight, IconBloodPressure, IconTemperature } from '@/components/icons/icons';
+import { 
+  IconSpO2, 
+  IconRespiration, 
+  IconBloodGlucose, 
+  IconWeight, 
+  IconHeight, 
+  IconBloodPressure, 
+  IconTemperature, 
+  IconPainAssessment } from '@/components/icons/icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Sidebar } from '@/components/Sidebar';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
+import { Header } from '@/components/Header';
 interface Resident {
   id: string;
   name: string;
@@ -27,6 +41,7 @@ interface VitalType {
   name: string;
   color: string;
   selected: boolean;
+  observationMethod?: string;
 }
 
 const mockResidents: Resident[] = [
@@ -43,17 +58,17 @@ const SingleResidentPage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [vitals, setVitals] = useState<VitalType[]>([
-    { id: 'blood-pressure', name: 'Blood Pressure', color: 'text-red-500', selected: true },
-    { id: 'temperature', name: 'Temperature', color: 'text-orange-500', selected: false },
-    { id: 'spo2', name: 'SpO2', color: 'text-blue-500', selected: false },
-    { id: 'pain-assessment', name: 'Pain Assessment', color: 'text-pink-500', selected: false },
-    { id: 'blood-glucose', name: 'Blood Glucose', color: 'text-purple-500', selected: false },
-    { id: 'weight', name: 'Weight', color: 'text-orange-500', selected: false },
-    { id: 'respiration', name: 'Respiration', color: 'text-blue-500', selected: false },
-    { id: 'height', name: 'Height', color: 'text-green-500', selected: false },
+    { id: 'blood-pressure', name: 'Blood Pressure', color: 'text-red-500', selected: true, observationMethod: 'sitting-left-arm' },
+    { id: 'temperature', name: 'Temperature', color: 'text-orange-500', selected: false, observationMethod: 'oral' },
+    { id: 'spo2', name: 'SpO2', color: 'text-blue-500', selected: false, observationMethod: 'finger' },
+    { id: 'pain-assessment', name: 'Pain Assessment', color: 'text-pink-500', selected: false, observationMethod: 'visual-scale' },
+    { id: 'blood-glucose', name: 'Blood Glucose', color: 'text-purple-500', selected: false, observationMethod: 'fingerstick' },
+    { id: 'weight', name: 'Weight', color: 'text-orange-500', selected: false, observationMethod: 'standing' },
+    { id: 'respiration', name: 'Respiration', color: 'text-blue-500', selected: false, observationMethod: 'visual-count' },
+    { id: 'height', name: 'Height', color: 'text-green-500', selected: false, observationMethod: 'standing' },
   ]);
 
-  const [observationMethod, setObservationMethod] = useState('sitting-left-arm');
+  //const [observationMethod, setObservationMethod] = useState('sitting-left-arm');
   const [painLevel, setPainLevel] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [manualDevice, setManualDevice] = useState('');
@@ -61,6 +76,9 @@ const SingleResidentPage = () => {
   const [selectedVitalForEdit, setSelectedVitalForEdit] = useState<string | null>(null);
   const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
   const [showVitalsPanel, setShowVitalsPanel] = useState(true);
+  const [selectedHub, setSelectedHub] = useState<string>('');
+  const [hubConnected, setHubConnected] = useState(false);
+  const [hubReady, setHubReady] = useState(false);
 
   interface VitalReading {
     device: string;
@@ -136,6 +154,13 @@ type VitalReadings = Record<VitalKey, VitalReading>;
     { value: 9, emoji: '😱', label: 'Severe', color: 'bg-red-200 border-red-400 text-red-900' },
     { value: 10, emoji: '🤯', label: 'Worst', color: 'bg-red-300 border-red-500 text-red-950' },
   ];
+
+  const hubOptions = [
+    { id: 'hub-001', name: 'Station 1 - Main Hub', location: 'Nursing Station A' },
+    { id: 'hub-002', name: 'Station 2 - Mobile Hub', location: 'Wing B' },
+    { id: 'hub-003', name: 'Station 3 - Emergency Hub', location: 'ICU' },
+    { id: 'hub-004', name: 'Station 4 - Portable Hub', location: 'Available' }
+  ];
   
   const { id } = useParams<{ id: string }>();
   const resident = mockResidents.find(r => r.id === id);
@@ -157,39 +182,218 @@ type VitalReadings = Record<VitalKey, VitalReading>;
     }));
   };
 
+  const updateVitalObservationMethod = (vitalId: string, method: string) => {
+    setVitals(prev => prev.map(vital => 
+      vital.id === vitalId ? { ...vital, observationMethod: method } : vital
+    ));
+  };
+
+  const getObservationMethodOptions = (vitalId: string) => {
+    switch (vitalId) {
+      case 'blood-pressure':
+        return [
+          { value: 'sitting-left-arm', label: 'Sitting l/arm (Default)' },
+          { value: 'sitting-right-arm', label: 'Sitting r/arm' },
+          { value: 'standing-left-arm', label: 'Standing l/arm' },
+          { value: 'standing-right-arm', label: 'Standing r/arm' },
+          { value: 'lying-left-arm', label: 'Lying l/arm' },
+          { value: 'lying-right-arm', label: 'Lying r/arm' },
+          { value: 'other', label: 'Other' }
+        ];
+      case 'temperature':
+        return [
+          { value: 'oral', label: 'Oral' },
+          { value: 'axillary', label: 'Axillary (Armpit)' },
+          { value: 'rectal', label: 'Rectal' },
+          { value: 'temporal', label: 'Temporal (Forehead)' },
+          { value: 'tympanic', label: 'Tympanic (Ear)' }
+        ];
+      case 'spo2':
+        return [
+          { value: 'finger', label: 'Finger' },
+          { value: 'toe', label: 'Toe' },
+          { value: 'earlobe', label: 'Earlobe' },
+          { value: 'forehead', label: 'Forehead' }
+        ];
+      case 'pain-assessment':
+        return [
+          { value: 'visual-scale', label: 'Visual Scale (0-10)' },
+          { value: 'faces-scale', label: 'Faces Scale' },
+          { value: 'verbal', label: 'Verbal Description' },
+          { value: 'behavioral', label: 'Behavioral Assessment' }
+        ];
+      case 'blood-glucose':
+        return [
+          { value: 'fingerstick', label: 'Fingerstick' },
+          { value: 'alternate-site', label: 'Alternate Site' },
+          { value: 'continuous-monitor', label: 'Continuous Monitor' }
+        ];
+      case 'weight':
+        return [
+          { value: 'standing', label: 'Standing Scale' },
+          { value: 'wheelchair', label: 'Wheelchair Scale' },
+          { value: 'bed', label: 'Bed Scale' },
+          { value: 'chair', label: 'Chair Scale' }
+        ];
+      case 'respiration':
+        return [
+          { value: 'visual-count', label: 'Visual Count' },
+          { value: 'auscultation', label: 'Auscultation' },
+          { value: 'monitor', label: 'Electronic Monitor' }
+        ];
+      case 'height':
+        return [
+          { value: 'standing', label: 'Standing (Stadiometer)' },
+          { value: 'recumbent', label: 'Recumbent (Lying Down)' },
+          { value: 'knee-height', label: 'Knee Height Estimation' },
+          { value: 'arm-span', label: 'Arm Span Estimation' }
+        ];
+      default:
+        return [{ value: 'standard', label: 'Standard Method' }];
+    }
+  };
+
+  const deleteVitalReading = (vitalId: VitalKey) => {
+    setVitalReadings(prev => {
+      const updated = { ...prev };
+      delete updated[vitalId];
+      return updated;
+    });
+    
+    // Also unselect the vital
+    setVitals(prev => prev.map(vital => 
+      vital.id === vitalId ? { ...vital, selected: false } : vital
+    ));
+
+    toast({
+      title: "Data deleted",
+      description: "Vital measurement has been removed.",
+    });
+  };
+
+  const retakeVitalReading = (vitalId: VitalKey) => {
+    setVitalReadings(prev => {
+      const updated = { ...prev };
+      delete updated[vitalId];
+      return updated;
+    });
+
+    toast({
+      title: "Retaking measurement",
+      description: "Previous data cleared. Ready to collect new measurement.",
+    });
+  };
+
+  // Simulate hub connection when hub is selected
+  const handleHubSelection = (hubId: string) => {
+    setSelectedHub(hubId);
+    setHubConnected(false);
+    setHubReady(false);
+    
+    // Simulate connection process
+    setTimeout(() => {
+      setHubConnected(true);
+      setTimeout(() => {
+        setHubReady(true);
+      }, 1500);
+    }, 1000);
+  };
+
+  const handleNext = () => {
+    const selectedVitals = vitals.filter(v => v.selected);
+    if (selectedVitals.length === 0) {
+      toast({
+        title: "No vitals selected",
+        description: "Please select at least one vital to measure.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!selectedHub) {
+      toast({
+        title: "No hub selected",
+        description: "Please select a measurement hub.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!hubReady) {
+      toast({
+        title: "Hub not ready",
+        description: "Please wait for the hub to connect and become ready.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVitalsSubmitted(true);
+    setShowVitalsPanel(false);
+    toast({
+      title: "Measurements ready",
+      description: "Proceeding to data collection display.",
+    });
+  };
+
+  const handleSubmit = () => {
+    // Simulate submission process
+    const hasError = Math.random() < 0.1; // 10% chance of error for demo
+    
+    if (hasError) {
+      toast({
+        title: "Submission failed",
+        description: "There was an error submitting the vital measurements. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Vitals submitted successfully",
+      description: "All vital measurements have been recorded for the resident.",
+    });
+
+    // Navigate back to residents page after a short delay
+    setTimeout(() => {
+      router.push('/residents');
+    }, 2000);
+  };
+
+  // Navigate back if no vitals are selected
+  useEffect(() => {
+    const selectedVitals = vitals.filter(v => v.selected);
+    const hasVitalReadings = Object.keys(vitalReadings).length > 0;
+    
+    // Only navigate back if we're in the measurement view and have no selected vitals or readings
+    if (vitalsSubmitted && selectedVitals.length === 0 && !hasVitalReadings) {
+      router.push(`/resident/${id}`);
+    }
+  }, [vitals, vitalReadings, vitalsSubmitted, router, id]);
+
+  // if (!resident) {
+  //   return (
+  //     <div className="min-h-screen bg-background flex items-center justify-center">
+  //       <div className="text-center">
+  //         <h2 className="text-2xl font-bold text-foreground mb-4">Resident Not Found</h2>
+  //         <Button onClick={() => router.push('/residents')}>
+  //           <ArrowLeft className="mr-2 h-4 w-4" />
+  //           Back to Residents
+  //         </Button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
-      <div className="w-20 bg-card border-r border-border flex flex-col items-center py-4 shadow-soft">
-        <div className="mb-8">
-          <div className="w-12 h-12">
-            <Image src="/ema-logo.png" alt="ema logo" width={40} height={40} />
-          </div>
-        </div>
-        <Sidebar />
-      </div>
+      <Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4 shadow-soft">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-10 h-10">
-                <AvatarFallback className="bg-primary text-primary-foreground">CW</AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="font-semibold text-foreground">Chloe Williams, LPN</h2>
-                <p className="text-sm text-muted-foreground">Licensed Practical Nurse</p>
-              </div>
-            </div>
-            
-            <Button variant="destructive" size="sm" className="gap-2">
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
-          </div>
-        </header>
+        <Header />
 
         {/* Content Area */}
         <div className="flex-1 p-6">
@@ -212,99 +416,111 @@ type VitalReadings = Record<VitalKey, VitalReading>;
               </div>
             </div>
             <div>
-              <div className="mb-8 flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground">Select Vitals</h2>
-                  <p className="text-muted-foreground">Choose which vitals to measure for this resident</p>
+              {!hubReady && !vitalsSubmitted && (
+                <div className="mb-8 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground">Select Vitals</h2>
+                    <p className="text-muted-foreground">Choose which vitals to measure for this resident</p>
+                  </div>
                 </div>
-                <div className='flex gap-3'>
-                  {vitalsSubmitted && (
-                    <Button 
-                      onClick={() => {
-                        setShowVitalsPanel(true);
-                        setVitalsSubmitted(false);
-                      }}
-                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md font-medium"
-                    >
-                      Start New Measurement
-                    </Button>
-                  )}
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => {
-                      const selectedVitals = vitals.filter(v => v.selected);
-                      if (selectedVitals.length > 0) {
-                        setSelectedVitalForEdit(selectedVitals[0].id);
-                        setManualDevice(vitalReadings[selectedVitals[0].id as VitalKey]?.device || '');
-                        setManualReading(vitalReadings[selectedVitals[0].id as VitalKey]?.reading || '');
-                        setIsDialogOpen(true);
-                      }
-                    }} 
-                    className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md font-medium"
-                    disabled={!vitals.some(v => v.selected)} 
-                    >
-                    Manual Entry
-                  </Button>
-                </div>
-              </div>
+              )}
+              
               {/* Vitals Grid */}
               {showVitalsPanel && !vitalsSubmitted && (
                 <Card className="p-6 shadow-medium border-border">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {vitals.map((vital) => (
-                      <div 
-                        key={vital.id}
-                        onClick={() => toggleVital(vital.id)}
-                        className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-all duration-200"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`text-2xl font-bold ${vital.color}`}>
-                            {vital.name}
+                      <div key={vital.id} className="space-y-3">
+                        <div 
+                          onClick={() => toggleVital(vital.id)}
+                          className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 focus-visible:border-border cursor-pointer transition-all duration-200"
+                          >
+                          <div className="flex items-center gap-3">
+                            <div className={`text-2xl font-bold ${vital.color}`}>
+                              {vital.name}
+                            </div>
+                          </div>
+                                                
+                          <div className="flex items-center">
+                            <Checkbox 
+                              checked={vital.selected}
+                              onCheckedChange={() => toggleVital(vital.id)}
+                              className="w-6 h-6 text-white"
+                            />
                           </div>
                         </div>
-                        
-                        <div className="flex items-center">
-                          <Checkbox 
-                            checked={vital.selected}
-                            onCheckedChange={() => toggleVital(vital.id)}
-                            className="w-6 h-6 text-white"
-                          />
-                        </div>
+                        {vital.selected && vital.id !== 'pain-assessment' && (
+                          <div className="ml-4 p-3 bg-muted/30 rounded-lg border border-border focus-visible:border-border outline-none">
+                            <Label className="text-sm font-medium text-foreground mb-2 block">
+                              Observation Method
+                            </Label>
+                            <Select 
+                              value={vital.observationMethod} 
+                              onValueChange={(value) => updateVitalObservationMethod(vital.id, value)}
+                            >
+                              <SelectTrigger className="w-full border border-border focus:border-border focus-visible:border-border outline-none text-white ">
+                                <SelectValue placeholder="Select method" />
+                              </SelectTrigger>
+                              <SelectContent className='bg-muted border-border'>
+                                {getObservationMethodOptions(vital.id).map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 </Card>
               )}
               
-              {/* Blood Pressure Observation Method */}
-              {showVitalsPanel && !vitalsSubmitted && vitals.find(v => v.id === 'blood-pressure')?.selected && (
-                  <Card className="p-6 shadow-medium mt-6 border-border">
-                    <h3 className="text-xl font-bold text-foreground mb-6">Blood Pressure Observation Method</h3>
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-all duration-200">
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl font-bold text-red-500">
-                          Observation Method
+              {/* Hub Selection Card */}
+              {showVitalsPanel && !vitalsSubmitted && (
+                <Card className="p-6 shadow-medium my-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Select Measurement Hub</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-foreground mb-2 block">
+                        Available Hubs
+                      </Label>
+                      <Select value={selectedHub} onValueChange={handleHubSelection}>
+                        <SelectTrigger className="w-full border-border focus:border-border focus-visible:border-border outline-none text-white">
+                          <SelectValue placeholder="Select a measurement hub" />
+                        </SelectTrigger>
+                        <SelectContent className='bg-muted border-border'>
+                          {hubOptions.map((hub) => (
+                            <SelectItem key={hub.id} value={hub.id}>
+                              {hub.name} - {hub.location}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {selectedHub && (
+                      <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border">
+                        <h4 className="text-sm font-medium text-foreground mb-3">Hub Status</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${hubConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                            <span className="text-sm text-foreground">
+                              {hubConnected ? 'Connected' : 'Connecting...'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${hubReady ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                            <span className="text-sm text-foreground">
+                              {hubReady ? 'Ready to collect vitals' : 'Preparing devices...'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center">
-                        <Select value={observationMethod} onValueChange={setObservationMethod}>
-                          <SelectTrigger className="w-[200px] border-border text-white">
-                            <SelectValue placeholder="Select method" className='text-white' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="sitting-left-arm">Sitting l/arm (Default)</SelectItem>
-                            <SelectItem value="sitting-right-arm">Sitting r/arm</SelectItem>
-                            <SelectItem value="standing-left-arm">Standing l/arm</SelectItem>
-                            <SelectItem value="standing-right-arm">Standing r/arm</SelectItem>
-                            <SelectItem value="lying-left-arm">Lying l/arm</SelectItem>
-                            <SelectItem value="lying-right-arm">Lying r/arm</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </Card>
+                    )}
+                  </div>
+                </Card>
               )}
               {/* Pain Assessment Levels */}
               {showVitalsPanel && !vitalsSubmitted && vitals.find(v => v.id === 'pain-assessment')?.selected && (
@@ -339,194 +555,269 @@ type VitalReadings = Record<VitalKey, VitalReading>;
                   </div>
                 </Card>
               )}
-              {/* Bluetooth Device Readings */}
-              {vitals.some(v => v.selected) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                  {vitals.filter(v => v.selected).map((vital) => {
-                    const getVitalConfig = (vitalId: string) => {
-                      switch (vitalId) {
-                        case 'blood-pressure':
-                          return {
-                            bg: 'bg-red-500',
-                            iconBg: 'bg-red-400',
-                            icon: <IconBloodPressure className="w-6 h-6 text-primary" />,
-                            abbreviation: 'BLOOD PRESSURE',
-                            device: vitalReadings[vitalId]?.device || 'Omron BP7350',
-                            reading: vitalReadings[vitalId]?.reading || '118/88 PR 81',
-                            unit: 'SYS/DIA mmHg'
-                          };
-                        case 'temperature':
-                          return {
-                            bg: 'bg-orange-500',
-                            iconBg: 'bg-orange-400',
-                            icon: <IconTemperature className="w-6 h-6 text-primary" />,
-                            abbreviation: 'TEMPERATURE',
-                            device: vitalReadings[vitalId]?.device || 'ThermoScan Pro',
-                            reading: vitalReadings[vitalId]?.reading || '98.6°F',
-                            unit: 'Body Temperature'
-                          };
-                        case 'spo2':
-                          return {
-                            bg: 'bg-blue-500',
-                            iconBg: 'bg-blue-400',
-                            icon: <IconSpO2 className="w-6 h-6 text-primary" />,
-                            abbreviation: 'SpO2',
-                            device: vitalReadings[vitalId]?.device || 'Pulse Oximeter',
-                            reading: vitalReadings[vitalId]?.reading || '98% PR 72',
-                            unit: 'Oxygen Saturation'
-                          };
-                        case 'weight':
-                          return {
-                            bg: 'bg-green-500',
-                            iconBg: 'bg-green-400',
-                            icon: <IconWeight className="w-6 h-6 text-primary" />,
-                            abbreviation: 'WEIGHT',
-                            device: vitalReadings[vitalId]?.device || 'Digital Scale',
-                            reading: vitalReadings[vitalId]?.reading || '165.2 lbs',
-                            unit: 'Body Weight'
-                          };
-                        case 'blood-glucose':
-                          return {
-                            bg: 'bg-purple-500',
-                            iconBg: 'bg-purple-400',
-                            icon: <IconBloodGlucose className="w-6 h-6 text-primary" />,
-                            abbreviation: 'BG',
-                            device: vitalReadings[vitalId]?.device || 'Glucometer',
-                            reading: vitalReadings[vitalId]?.reading || '95 mg/dL',
-                            unit: 'Blood Sugar'
-                          };
-                        case 'respiration':
-                          return {
-                            bg: 'bg-cyan-500',
-                            iconBg: 'bg-cyan-400',
-                            icon: <IconRespiration className="w-6 h-6 text-primary" />,
-                            abbreviation: 'RESPIRATION',
-                            device: vitalReadings[vitalId]?.device || 'Chest Monitor',
-                            reading: vitalReadings[vitalId]?.reading || '16 bpm',
-                            unit: 'Breathing Rate'
-                          };
-                        case 'height':
-                          return {
-                            bg: 'bg-teal-500',
-                            iconBg: 'bg-teal-400',
-                            icon: <IconHeight className="w-6 h-6 text-primary" />,
-                            abbreviation: 'HT',
-                            device: vitalReadings[vitalId]?.device || 'Height Meter',
-                            reading: vitalReadings[vitalId]?.reading || '5\'8"',
-                            unit: 'Body Height'
-                          };
-                        case 'pain-assessment':
-                          return {
-                            bg: 'bg-pink-500',
-                            iconBg: 'bg-pink-400',
-                            icon: (
-                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                              </svg>
-                            ),
-                            abbreviation: 'PAIN',
-                            device: 'Pain Scale',
-                            reading: painLevel !== null ? `${painLevel}/10` : '--',
-                            unit: 'Pain Level'
-                          };
-                        default:
-                          return {
-                            bg: 'bg-gray-500',
-                            iconBg: 'bg-gray-400',
-                            icon: <div className="w-6 h-6">•</div>,
-                            abbreviation: 'N/A',
-                            device: 'Unknown',
-                            reading: '--',
-                            unit: 'Unknown'
-                          };
-                      }
-                    };
-
-                    const config = getVitalConfig(vital.id);
-
-                    return (
-                      <Card key={vital.id} className={`p-5 ${config.bg} text-white shadow-lg border-0`}>
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-12 h-12 ${config.iconBg} rounded-lg flex items-center justify-center shadow-sm`}>
-                              {config.icon}
-                            </div>
-                            <div>
-                              <div className="text-xl font-bold tracking-wide">
-                                {config.abbreviation}
-                              </div>
-                              <div className="text-sm text-white/90 font-medium">
-                                {config.device}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="text-xs text-white/80 mb-3 font-mono tracking-wider">
-                          {vital.id === 'blood-pressure' && observationMethod.replace('-', ' ')}
-                          <br />00:5f:bf:30:3c:36
-                        </div>
-                        
-                        <div className="text-3xl font-bold mb-2 tracking-tight shadow-text">
-                          {config.reading}
-                        </div>
-                        
-                        <div className="text-sm text-white/90 mb-3 font-medium">
-                          {config.unit}
-                        </div>
-                        
-                        <div className="text-xs text-white/80 font-mono">
-                          {new Date().toLocaleTimeString('en-US', { 
-                            hour12: false, 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })} / {new Date().toLocaleDateString('en-GB')}
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
+             
             </div>
             {/* Action Buttons */}
             {showVitalsPanel && !vitalsSubmitted && (
               <div className="flex justify-center gap-4 mt-8">
                 <Button 
                   variant="outline" 
-                  size="lg"
-                  className='border-border text-white px-8'
+                  className='border-border text-white px-8 py-3'
+                  onClick={() => router.push('/residents')}
                 >
                   Cancel
                 </Button>
                 <Button 
-                  size="lg"
-                  className="px-8"
-                  disabled={!vitals.some(v => v.selected)}
-                  onClick={() => {
-                    console.log("Toast firing...");
-                    try {
-                      const selectedCount = vitals.filter(v => v.selected).length;
-                      console.log(`${resident?.name}`);
-                      setVitalsSubmitted(true);
-                      setShowVitalsPanel(false);
-                      toast({
-                        title: "Success",
-                        description: `Successfully submitted ${selectedCount} vital measurement${selectedCount !== 1 ? 's' : ''} for ${resident?.name}`,
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: `${error} Failed to submit vital measurements. Please try again.`,
-                        variant: "destructive",
-                      });
-                    }
-                  }}
+                  onClick={handleNext}
+                  className="px-8 py-3 text-lg font-medium bg-primary hover:bg-primary/90"
+                  disabled={!vitals.some(v => v.selected) || !selectedHub || !hubReady}
                 >
-                  Submit Vital Measurements
+                  Next
                 </Button>
               </div>
             )}
             
+            {/* Device Readings */}
+            {hubReady && vitalsSubmitted && (
+              <div>
+                {/* Hub Information */}
+                <Card className="p-6 shadow-medium border-border">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Measurement Hub</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Hub Selected</div>
+                      <div className="text-lg font-semibold text-foreground">
+                        {hubOptions.find(hub => hub.id === selectedHub)?.name}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Location</div>
+                      <div className="text-lg font-semibold text-foreground">
+                        {hubOptions.find(hub => hub.id === selectedHub)?.location}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+                {/* Vital Readings Grid */}
+                {
+                  vitals.some(v => v.selected) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                    {vitals.filter(v => v.selected).map((vital) => {
+                      const getVitalConfig = (vitalId: string) => {
+                        switch (vitalId) {
+                          case 'blood-pressure':
+                            return {
+                              bg: 'bg-red-500',
+                              iconBg: 'bg-red-400',
+                              icon: <IconBloodPressure className="w-6 h-6 text-primary" />,
+                              observationMethod: vital.observationMethod || 'sitting-left-arm',
+                              abbreviation: 'BLOOD PRESSURE',
+                              device: vitalReadings[vitalId]?.device || 'Omron BP7350',
+                              reading: vitalReadings[vitalId]?.reading || '118/88 PR 81',
+                              unit: 'SYS/DIA mmHg'
+                            };
+                          case 'temperature':
+                            return {
+                              bg: 'bg-orange-500',
+                              iconBg: 'bg-orange-400',
+                              icon: <IconTemperature className="w-6 h-6 text-primary" />,
+                              observationMethod: vital.observationMethod || 'oral',
+                              abbreviation: 'TEMPERATURE',
+                              device: vitalReadings[vitalId]?.device || 'ThermoScan Pro',
+                              reading: vitalReadings[vitalId]?.reading || '98.6°F',
+                              unit: 'Body Temperature'
+                            };
+                          case 'spo2':
+                            return {
+                              bg: 'bg-blue-500',
+                              iconBg: 'bg-blue-400',
+                              icon: <IconSpO2 className="w-6 h-6 text-primary" />,
+                              observationMethod: vital.observationMethod || 'finger',
+                              abbreviation: 'SpO2',
+                              device: vitalReadings[vitalId]?.device || 'finger',
+                              reading: vitalReadings[vitalId]?.reading || '98% PR 72',
+                              unit: 'Oxygen Saturation'
+                            };
+                          case 'weight':
+                            return {
+                              bg: 'bg-green-500',
+                              iconBg: 'bg-green-400',
+                              icon: <IconWeight className="w-6 h-6 text-primary" />,
+                              observationMethod: vital.observationMethod || 'visual-scale',
+                              abbreviation: 'WEIGHT',
+                              device: vitalReadings[vitalId]?.device || 'Digital Scale',
+                              reading: vitalReadings[vitalId]?.reading || '165.2 lbs',
+                              unit: 'Body Weight'
+                            };
+                          case 'blood-glucose':
+                            return {
+                              bg: 'bg-purple-500',
+                              iconBg: 'bg-purple-400',
+                              icon: <IconBloodGlucose className="w-6 h-6 text-primary" />,
+                              observationMethod: vital.observationMethod || 'fingerstick',
+                              abbreviation: 'BG',
+                              device: vitalReadings[vitalId]?.device || 'Glucometer',
+                              reading: vitalReadings[vitalId]?.reading || '95 mg/dL',
+                              unit: 'Blood Sugar'
+                            };
+                          case 'respiration':
+                            return {
+                              bg: 'bg-cyan-500',
+                              iconBg: 'bg-cyan-400',
+                              icon: <IconRespiration className="w-6 h-6 text-primary" />,
+                              observationMethod: vital.observationMethod || 'standing',
+                              abbreviation: 'RESPIRATION',
+                              device: vitalReadings[vitalId]?.device || 'Chest Monitor',
+                              reading: vitalReadings[vitalId]?.reading || '16 bpm',
+                              unit: 'Breathing Rate'
+                            };
+                          case 'height':
+                            return {
+                              bg: 'bg-teal-500',
+                              iconBg: 'bg-teal-400',
+                              icon: <IconHeight className="w-6 h-6 text-primary" />,
+                              observationMethod: vital.observationMethod || 'standing',
+                              abbreviation: 'HT',
+                              device: vitalReadings[vitalId]?.device || 'Height Meter',
+                              reading: vitalReadings[vitalId]?.reading || '5\'8"',
+                              unit: 'Body Height'
+                            };
+                          case 'pain-assessment':
+                            return {
+                              bg: 'bg-pink-500',
+                              iconBg: 'bg-pink-400',
+                              icon: <IconPainAssessment className="w-6 h-6 text-primary" />,
+                              observationMethod: vital.observationMethod || 'visual-count',
+                              abbreviation: 'PAIN',
+                              device: 'Pain Scale',
+                              reading: painLevel !== null ? `${painLevel}/10` : '--',
+                              unit: 'Pain Level'
+                            };
+                          default:
+                            return {
+                              bg: 'bg-gray-500',
+                              iconBg: 'bg-gray-400',
+                              icon: <div className="w-6 h-6">•</div>,
+                              abbreviation: 'N/A',
+                              device: 'Unknown',
+                              reading: '--',
+                              unit: 'Unknown'
+                            };
+                        }
+                      };
+
+                      const config = getVitalConfig(vital.id);
+
+                      return (
+                        <Card key={vital.id} className={`p-5 ${config.bg} text-white shadow-lg border-0`}>
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 ${config.iconBg} rounded-lg flex items-center justify-center shadow-sm`}>
+                                {config.icon}
+                              </div>
+                              <div>
+                                <div className="text-xl font-bold tracking-wide">
+                                  {config.abbreviation}
+                                </div>
+                                <div className="text-sm text-white/90 font-medium">
+                                  {config.device}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-xs text-white/80 mb-3 font-semibold tracking-wider">
+                            { config.observationMethod?.replace('-', ' ')}
+                          </div>
+                          <div className="text-xs text-white/80 mb-3 font-mono tracking-wider">
+                            00:5f:bf:30:3c:36
+                          </div>
+                          
+                          <div className="text-3xl font-bold mb-2 tracking-tight shadow-text">
+                            {config.reading}
+                          </div>
+                          
+                          <div className="text-sm text-white/90 mb-3 font-medium">
+                            {config.unit}
+                          </div>
+                          
+                          <div className="text-xs text-white/80 font-mono">
+                            {new Date().toLocaleTimeString('en-US', { 
+                              hour12: false, 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })} / {new Date().toLocaleDateString('en-GB')}
+                          </div>
+                          <div className="flex gap-2 mt-4">
+                            <Button
+                              size="sm"
+                              className={`text-white/80 ${config.bg} shadow-sm`}
+                              onClick={() => retakeVitalReading(vital.id as VitalKey)}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              className={`text-white/80 ${config.bg} shadow-sm`}
+                              onClick={() => {
+                                setSelectedVitalForEdit(vital.id);
+                                setManualDevice(vitalReadings[vital.id as VitalKey]?.device || '');
+                                setManualReading(vitalReadings[vital.id as VitalKey]?.reading || '');
+                                setIsDialogOpen(true);
+                              }}
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`text-white/80 ${config.bg} shadow-sm`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="sm:max-w-sm border-border text-white bg-[#151515]">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Vital Measurement</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this {vital.name.toLowerCase()} measurement? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className='border-border'>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() => deleteVitalReading(vital.id as VitalKey)}
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </Card>
+                        
+                      );
+                    })}
+                  </div>
+                )
+                }
+                {/* Submit Button - Only show if there are vitals selected or readings */}
+                {(vitals.some(v => v.selected) || Object.keys(vitalReadings).length > 0) && (
+                  <div className="flex justify-center mt-8">
+                    <Button 
+                      onClick={handleSubmit}
+                      className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium text-lg"
+                      size="lg"
+                    >
+                      Submit Vitals
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

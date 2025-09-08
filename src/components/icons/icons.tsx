@@ -5,3 +5,4 @@ export { IconHeight } from "./IconHeight";
 export { IconBloodGlucose } from "./IconBloodGlucose";
 export { IconTemperature } from "./IconTemperature";
 export { IconBloodPressure } from "./IconBloodPressure";
+export { IconPainAssessment } from "./IconPainAssessment";

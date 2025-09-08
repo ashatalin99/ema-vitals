@@ -204,3 +204,10 @@ body {
 .shadow-text {
     text-shadow: 0 2px 4px rgba(0, 0, 0, .3);
 }
+
+.focus\:ring-2 {
+    &:focus {
+      --tw-ring-shadow: none;
+      box-shadow: 0;
+    }
+  }
