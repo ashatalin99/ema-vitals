@@ -156,10 +156,13 @@ type VitalReadings = Record<VitalKey, VitalReading>;
   ];
 
   const hubOptions = [
-    { id: 'hub-001', name: 'Station 1 - Main Hub', location: 'Nursing Station A' },
-    { id: 'hub-002', name: 'Station 2 - Mobile Hub', location: 'Wing B' },
-    { id: 'hub-003', name: 'Station 3 - Emergency Hub', location: 'ICU' },
-    { id: 'hub-004', name: 'Station 4 - Portable Hub', location: 'Available' }
+    { id: 'hub-001', name: '860322067669751', location: 'Nursing Station A' },
+    { id: 'hub-002', name: '860322068069456', location: 'Wing B' },
+    { id: 'hub-003', name: '868032061499434', location: 'ICU' },
+    { id: 'hub-004', name: '868032061505230', location: 'Available' },
+    { id: 'hub-005', name: '860322067630076', location: 'Nursing Station B' },
+    { id: 'hub-006', name: '868032061497644', location: 'Wing C' },
+    { id: 'hub-007', name: '860322067642022', location: 'Wing J' }
   ];
   
   const { id } = useParams<{ id: string }>();
