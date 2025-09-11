@@ -28,7 +28,7 @@ const mockResidents: Resident[] = [
   { id: '7', name: 'Albertson, Florentin', dob: '02-02-2029', location: 'Main 415 - B', exId: '9953' },
 ];
 
-const ResidentsPage = () => {
+const Residents = () => {
   const router = useRouter();
   const [selectedResident, setSelectedResident] = useState<string>('1');
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,8 +89,15 @@ const ResidentsPage = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <Header showHub={false} />
-
+        {/* <Header 
+          selectedHub={selectedHub}
+          hubOptions={hubOptions}
+          hubConnected={hubConnected}
+          hubReady={hubReady}
+          onHubSelection={handleHubSelection}
+          showHub={true}
+        /> */}
+        <Header showHub={true} />
         {/* Content Area */}
         <div className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
@@ -194,4 +201,4 @@ const ResidentsPage = () => {
   );
 };
 
-export default ResidentsPage;
+export default Residents;

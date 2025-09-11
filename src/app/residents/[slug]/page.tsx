@@ -62,7 +62,7 @@ const SingleResident = () => {
     { id: 'blood-pressure', name: 'Blood Pressure', color: 'text-red-500', selected: true, observationMethod: 'sitting-left-arm' },
     { id: 'temperature', name: 'Temperature', color: 'text-orange-500', selected: false, observationMethod: 'oral' },
     { id: 'spo2', name: 'SpO2', color: 'text-blue-500', selected: false, observationMethod: 'finger' },
-    // { id: 'pain-assessment', name: 'Pain Assessment', color: 'text-pink-500', selected: false, observationMethod: 'visual-scale' },
+    { id: 'pain-assessment', name: 'Pain Assessment', color: 'text-pink-500', selected: false, observationMethod: 'visual-scale' },
     { id: 'blood-glucose', name: 'Blood Glucose', color: 'text-purple-500', selected: false, observationMethod: 'fingerstick' },
     { id: 'weight', name: 'Weight', color: 'text-orange-500', selected: false, observationMethod: 'standing' },
     { id: 'respiration', name: 'Respiration', color: 'text-blue-500', selected: false, observationMethod: 'visual-count' },
@@ -77,9 +77,9 @@ const SingleResident = () => {
   const [selectedVitalForEdit, setSelectedVitalForEdit] = useState<string | null>(null);
   const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
   const [showVitalsPanel, setShowVitalsPanel] = useState(true);
-  const [selectedHub, setSelectedHub] = useState<string>('');
+  const [selectedHub, setSelectedHub] = useState<string>('868032061497644');
   const [hubConnected, setHubConnected] = useState(false);
-  const [hubReady, setHubReady] = useState(false);
+  const [hubReady, setHubReady] = useState(true);
 
   interface VitalReading {
     device: string;
@@ -339,7 +339,7 @@ type VitalReadings = Record<VitalKey, VitalReading>;
       title: "Measurements ready",
       description: "Proceeding to data collection display.",
     });
-    console.log(toast);
+    
   };
 
   const handleSubmit = () => {
@@ -400,15 +400,15 @@ type VitalReadings = Record<VitalKey, VitalReading>;
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <Header 
+        {/* <Header 
           selectedHub={selectedHub}
           hubOptions={hubOptions}
           hubConnected={hubConnected}
           hubReady={hubReady}
           onHubSelection={handleHubSelection}
           showHub={true}
-        />
-
+        /> */}
+        <Header showHub={true}/>
         {/* Content Area */}
         <div className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
@@ -529,8 +529,8 @@ type VitalReadings = Record<VitalKey, VitalReading>;
             </div>
             {/* Action Buttons */}
             {showVitalsPanel && !vitalsSubmitted && (
-              <div >
-                <div className='mt-6 mb-4 text-center'><p className='text-blue-500'>Please select hub option in the header</p></div>
+              <div className='my-6'>
+                
                 <div className="flex justify-center gap-4">
                   <Button 
                     variant="outline" 

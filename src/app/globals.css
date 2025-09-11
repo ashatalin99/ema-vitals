@@ -92,6 +92,7 @@ body {
 .bg-background { background-color: hsl(var(--background)); }
 .text-foreground { color: hsl(var(--foreground)); }
 .border-border { border-color: hsl(var(--border)); }
+.bg-border { background-color: hsl(var(--border)); }
 .bg-card { background-color: hsl(var(--card)); }
 .text-card-foreground { color: hsl(var(--card-foreground)); }
 .bg-popover { background-color: hsl(var(--popover)); }

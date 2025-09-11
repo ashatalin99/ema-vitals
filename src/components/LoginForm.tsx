@@ -93,7 +93,7 @@ const LoginForm = () => {
                 variant="medical"
                 size="lg"
                 className="w-full h-12 text-base"
-                onClick={() => router.push('/residents')}
+                onClick={() => router.push('/devices')}
               >
                 Login
               </Button>

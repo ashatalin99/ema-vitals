@@ -7,6 +7,7 @@ const sidebarItems = [
   { icon: Users, label: "Residents", link: "/residents" },
   { icon: HelpCircle, label: "Help", link: "/help" },
   { icon: Settings, label: "Settings", link: "/settings" },
+  { icon: LogOut, label: "Log Out", link: "/logout" },
 ];
 
 const Sidebar = () => {
@@ -40,9 +41,6 @@ const Sidebar = () => {
             </button>
           );
         })}
-        <button className="gap-2 mt-auto flex justify-center items-center">
-            <LogOut className="w-6 h-6 text-muted-foreground" onClick={() => {router.push('/')}} />
-        </button>
       </nav>
     </div>
   );

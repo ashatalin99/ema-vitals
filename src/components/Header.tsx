@@ -1,7 +1,10 @@
 // import { useRouter, usePathname } from "next/navigation";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useDevice } from '@/contexts/DeviceContext';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { BatteryFull, Thermometer } from 'lucide-react';
 
 interface HubOption {
   id: string;
@@ -10,6 +13,8 @@ interface HubOption {
 }
 
 interface HeaderProps {
+  showVitalsPanel?: boolean;
+  vitalsSubmitted?: boolean;
   selectedHub?: string;
   hubOptions?: HubOption[];
   hubConnected?: boolean;
@@ -20,20 +25,48 @@ interface HeaderProps {
 
 
 const Header = ({
-  selectedHub,
-  hubOptions,
-  hubConnected,
-  hubReady,
+  showVitalsPanel = false,
+  vitalsSubmitted = false,
+  selectedHub = '',
+  hubOptions = [],
+  hubConnected = false,
+  hubReady = false,
   onHubSelection,
   showHub
 }: HeaderProps) => {
-  // const router = useRouter();
-  // const pathname = usePathname();
-  // const items = [
-  //   { icon: HelpCircle, label: "Help", link: "/help" },
-  //   { icon: Settings, label: "Settings", link: "/settings" },
-  // ];
 
+  const router = useRouter();
+  const { connectedDevice } = useDevice();
+  
+  // Use device context data if available, otherwise fall back to props
+  const deviceToShow = connectedDevice || {
+    device: hubOptions.find(h => h.id === selectedHub),
+    data: {
+      temperature: '23.4°C',
+      voltage: '4.1V',
+      signal: 3,
+      notes: 12,
+    },
+    isConnected: hubConnected,
+    isReady: hubReady,
+  };
+  
+
+
+  const renderSignalBars = (strength: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4].map((bar) => (
+          <div
+            key={bar}
+            className={`w-1 ${bar % 2 === 0 ? 'h-3' : 'h-2'} rounded-sm ${
+              bar <= strength ? 'bg-orange-500' : 'bg-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
   return (
     <header className="bg-card border-b border-border px-6 py-4 shadow-soft sticky top-0 z-10">
         <div className="flex items-center">
@@ -47,75 +80,75 @@ const Header = ({
               </div>
           </div>
           <div className='ml-auto flex items-center gap-6'>
+            
             {/* Hub Selection and Status in Header */}
             {showHub && (   
-<div className='flex items-center gap-6'>
-                {/* Hub Status Panel in Header */}
-                {selectedHub && (
-                    <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg border border-border">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${hubConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                          <span className="text-xs text-foreground">
-                            {hubConnected ? 'Connected' : 'Connecting...'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${hubReady ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                          <span className="text-xs text-foreground">
-                            {hubReady ? 'Ready' : 'Preparing...'}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="border-l border-border pl-4">
-                        <div className="flex items-center gap-3 text-xs">
-                          <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-cyan-500"></div>
-                            <span className="text-muted-foreground">Temp:</span>
-                            <span className="text-foreground font-medium">23.4°C</span>
+              <div className='flex items-center gap-6'>
+                  {/* Hub Status Panel in Header */}
+                  {(selectedHub || connectedDevice) && (
+                      <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg border border-border">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${deviceToShow.isConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                            <span className="text-xs text-foreground">
+                              {deviceToShow.isConnected ? 'Connected' : 'Connecting...'}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                            <span className="text-muted-foreground">Voltage:</span>
-                            <span className="text-foreground font-medium">4.1V</span>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${deviceToShow.isReady ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                            <span className="text-xs text-foreground">
+                              {deviceToShow.isReady ? 'Ready' : 'Preparing...'}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                            <span className="text-muted-foreground">Signal:</span>
-                            <div className="flex items-center gap-0.5">
-                              <div className="w-1 h-2 bg-orange-500 rounded-sm"></div>
-                              <div className="w-1 h-3 bg-orange-500 rounded-sm"></div>
-                              <div className="w-1 h-2 bg-gray-300 rounded-sm"></div>
-                              <div className="w-1 h-3 bg-gray-300 rounded-sm"></div>
+                        </div>
+                        {connectedDevice && (
+                          <div className="border-l border-border pl-4">
+                            <div className="flex items-center gap-3 text-xs">
+                              <div className="flex items-center gap-1">
+                                <Thermometer className="h-4 w-4 text-cyan-500" />
+                                <span className="text-muted-foreground">Temp:</span>
+                                <span className="text-foreground font-medium">{connectedDevice?.data.temperature}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <BatteryFull className="h-4 w-4 text-green-500" />
+                                <span className="text-muted-foreground">Voltage:</span>
+                                <span className="text-foreground font-medium">{connectedDevice?.data.voltage}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                                <span className="text-muted-foreground">Signal:</span>
+                                <div className="flex items-center gap-0.5">
+                                  {connectedDevice ? renderSignalBars(connectedDevice.data.signal) : null}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                <span className="text-muted-foreground">Notes:</span>
+                                <span className="text-foreground font-medium">12</span>
+                              </div>
+                              <div className="border-l border-border pl-4">
+                            <div className="text-xs">
+                              <span className="text-muted-foreground">Device:</span>
+                              <span className="text-foreground font-medium ml-1">
+                                {connectedDevice?.device.id} - {connectedDevice?.device.name}
+                              </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                            <span className="text-muted-foreground">Notes:</span>
-                            <span className="text-foreground font-medium">12</span>
+                            </div>
                           </div>
-                        </div>
+                        )}
+                        
                       </div>
-                    </div>
-                )}
-                <div className="flex items-center gap-3">
-                  <Select value={selectedHub} onValueChange={onHubSelection}>
-                    <SelectTrigger className="w-64 border-border text-white">
-                      <SelectValue placeholder="Select hub" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(hubOptions ?? []).map((hub) => (
-                        <SelectItem key={hub.id} value={hub.id}>
-                          {hub.name} - {hub.location}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-            </div>
+                  )}
+                  
+              </div>
             )}
-            
+            <Button 
+              onClick={() => router.push('/devices')}
+              className="px-4 bg-primary text white"
+            >
+              Select New Device
+            </Button>
           </div>
         </div>
     </header>
