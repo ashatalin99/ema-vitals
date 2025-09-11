@@ -94,12 +94,12 @@ const Header = ({
                               {deviceToShow.isConnected ? 'Connected' : 'Connecting...'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          {/* <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${deviceToShow.isReady ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                             <span className="text-xs text-foreground">
                               {deviceToShow.isReady ? 'Ready' : 'Preparing...'}
                             </span>
-                          </div>
+                          </div> */}
                         </div>
                         {connectedDevice && (
                           <div className="border-l border-border pl-4">
@@ -147,7 +147,7 @@ const Header = ({
               onClick={() => router.push('/devices')}
               className="px-4 bg-primary text white"
             >
-              Select Device
+              Select New Device
             </Button>
           </div>
         </div>
