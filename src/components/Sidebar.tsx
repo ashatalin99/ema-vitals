@@ -7,7 +7,7 @@ const sidebarItems = [
   { icon: Users, label: "Residents", link: "/residents" },
   { icon: HelpCircle, label: "Help", link: "/help" },
   { icon: Settings, label: "Settings", link: "/settings" },
-  { icon: LogOut, label: "Log Out", link: "/logout" },
+  { icon: LogOut, label: "Log Out", link: "/" },
 ];
 
 const Sidebar = () => {
