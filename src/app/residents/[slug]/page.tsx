@@ -41,7 +41,7 @@ interface VitalType {
   name: string;
   color: string;
   selected: boolean;
-  observationMethod?: string;
+  observationMethod: string;
 }
 
 const mockResidents: Resident[] = [
@@ -69,7 +69,7 @@ const SingleResident = () => {
     { id: 'height', name: 'Height', color: 'text-green-500', selected: false, observationMethod: 'standing' },
   ]);
 
-  const [observationMethod, setObservationMethod] = useState('sitting-left-arm');
+  const [observationMethod, setObservationMethod] = useState<string | undefined>(undefined);
   const [painLevel, setPainLevel] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [manualDevice, setManualDevice] = useState('');
@@ -554,7 +554,7 @@ type VitalReadings = Record<VitalKey, VitalReading>;
             {hubReady && vitalsSubmitted && (
               <div>
                 {/* Hub Information */}
-                <Card className="p-6 shadow-medium border-border">
+                {/* <Card className="p-6 shadow-medium border-border">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Measurement Hub</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -570,7 +570,7 @@ type VitalReadings = Record<VitalKey, VitalReading>;
                       </div>
                     </div>
                   </div>
-                </Card>
+                </Card> */}
                 {/* Vital Readings Grid */}
                 {
                   vitals.some(v => v.selected) && (
@@ -777,36 +777,41 @@ type VitalReadings = Record<VitalKey, VitalReading>;
                   </div>
                 )
                 }
-                <Card className="p-6 shadow-medium mt-6 border-border">
-                  <h3 className="text-xl font-bold text-foreground">Pain Level Assessment</h3>
-                  <div className="mb-6">
-                    <Label className="text-lg font-medium text-foreground mb-4 block text-pink-500">
-                      Pain Level: {painLevel !== null ? `${painLevel} - ${painLevels[painLevel].label}` : 'Not Selected'}
-                    </Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 text-white">
-                      {painLevels.map((level) => (
-                        <button
-                          key={level.value}
-                          onClick={() => setPainLevel(level.value)}
-                          className={`p-4 rounded-lg border-2 transition-all duration-200 text-center hover:scale-105 ${
-                            painLevel === level.value 
-                              ? `${level.color} scale-105 shadow-md` 
-                              : 'bg-background border-border hover:bg-muted/50'
-                          }`}
-                        >
-                          <div className="text-3xl mb-2">{level.emoji}</div>
-                          <div className="text-sm font-medium">{level.value}</div>
-                          <div className="text-xs">{level.label}</div>
-                        </button>
-                      ))}
+                {/* Pain Assessment Levels */}
+                {vitals.some(v => (v.selected && v.id === 'pain-assessment')) && (
+
+                  <Card className="p-6 shadow-medium mt-6 border-border">
+                    <h3 className="text-xl font-bold text-foreground">Pain Level Assessment</h3>
+                    <div className="mb-6">
+                      <Label className="text-lg font-medium text-foreground mb-4 block text-pink-500">
+                        Pain Level: {painLevel !== null ? `${painLevel} - ${painLevels[painLevel].label}` : 'Not Selected'}
+                      </Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 text-white">
+                        {painLevels.map((level) => (
+                          <button
+                            key={level.value}
+                            onClick={() => setPainLevel(level.value)}
+                            className={`p-4 rounded-lg border-2 transition-all duration-200 text-center hover:scale-105 ${
+                              painLevel === level.value 
+                                ? `${level.color} scale-105 shadow-md` 
+                                : 'bg-background border-border hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className="text-3xl mb-2">{level.emoji}</div>
+                            <div className="text-sm font-medium">{level.value}</div>
+                            <div className="text-xs">{level.label}</div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Select the number that best describes your pain level (0 = No Pain, 10 = Worst Pain)
-                    </p>
-                  </div>
-                </Card>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Select the number that best describes your pain level (0 = No Pain, 10 = Worst Pain)
+                      </p>
+                    </div>
+                  </Card>
+                )} 
+                
                 {/* Submit Button - Only show if there are vitals selected or readings */}
                 {(vitals.some(v => v.selected) || Object.keys(vitalReadings).length > 0) && (
                   <div className="flex justify-center mt-8">
@@ -849,11 +854,12 @@ type VitalReadings = Record<VitalKey, VitalReading>;
               </Select>
             </div>
             {selectedVitalForEdit && (
+          
               <div>
                 <Label htmlFor="observation-method">Observation Method</Label>
-                <Select value={observationMethod} onValueChange={setObservationMethod}>
+                <Select value={observationMethod} onValueChange={() => setObservationMethod(undefined)}>
                   <SelectTrigger className="mt-1 border-border text-white">
-                    <SelectValue className='text-white' placeholder="Select observation method" />
+                    <SelectValue placeholder="Select observation method" />
                   </SelectTrigger>
                   <SelectContent>
                     {getObservationMethodOptions(selectedVitalForEdit).map((option) => (
