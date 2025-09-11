@@ -1,11 +1,11 @@
 "use client";
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, LogOut} from 'lucide-react';
+import { Search, Camera, X, Scan, LogOut} from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-
+import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Sidebar } from '@/components/Sidebar';
 
@@ -33,6 +33,10 @@ const Residents = () => {
   const [selectedResident, setSelectedResident] = useState<string>('1');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const recordsPerPage = 10;
 
   const filteredResidents = mockResidents.filter(resident =>
@@ -80,6 +84,58 @@ const Residents = () => {
       }, 1500);
     }, 1000);
   };
+  
+  const startCamera = async () => {
+    try {
+      setScanning(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Use back camera if available
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setScanning(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setScanning(false);
+    setShowScanner(false);
+  };
+
+  const handleScanWristband = () => {
+    setShowScanner(true);
+    startCamera();
+  };
+
+  const simulateScan = () => {
+    // Simulate scanning a wristband - in real implementation, this would decode the barcode/QR
+    const scannedId = '2440'; // Simulate scanning Jarrod Akin's ID
+    const resident = mockResidents.find(r => r.exId === scannedId);
+    if (resident) {
+      setSearchTerm(resident.name);
+      setSelectedResident(resident.id);
+      stopCamera();
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      // Cleanup camera on unmount
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -89,14 +145,6 @@ const Residents = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        {/* <Header 
-          selectedHub={selectedHub}
-          hubOptions={hubOptions}
-          hubConnected={hubConnected}
-          hubReady={hubReady}
-          onHubSelection={handleHubSelection}
-          showHub={true}
-        /> */}
         <Header showHub={true} />
         {/* Content Area */}
         <div className="flex-1 p-6">
@@ -108,15 +156,28 @@ const Residents = () => {
 
             {/* Search Bar */}
             <div className="mb-6">
-              <div className="relative max-w-xl">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7A7A81] w-5 h-5" />
-                <Input
-                  placeholder="Search by name, location, or ID..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-12 py-3 text-base bg-muted border-border rounded-l placeholder:text-[#7A7A81] text-white"
-                />
+              <div className='flex gap-4 items-end'>
+                <div className="relative flex-1 max-w-xl">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#7A7A81] w-5 h-5" />
+                  <Input
+                    placeholder="Search by name, location, or ID..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="pl-12 py-3 text-base bg-muted border-border rounded-l placeholder:text-[#7A7A81] text-white"
+                  />
+                </div>
+                <Button 
+                  onClick={handleScanWristband}
+                  variant="outline"
+                  size="lg"
+                  className="gap-2 px-6 py-3 bg-primary-10 border-primary-20 hover:bg-primary-20 text-white"
+                >
+                  <Scan className="w-5 h-5" />
+                  Scan Wristband
+                </Button>
               </div>
+              
+              
             </div>
 
             {/* Residents Table */}
