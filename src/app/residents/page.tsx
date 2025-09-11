@@ -50,6 +50,36 @@ const ResidentsPage = () => {
     setSearchTerm(value);
     setCurrentPage(1); // Reset to first page when searching
   };
+  const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
+  const [showVitalsPanel, setShowVitalsPanel] = useState(true); 
+  const [selectedHub, setSelectedHub] = useState<string>('');
+  const [hubConnected, setHubConnected] = useState(false);
+  const [hubReady, setHubReady] = useState(false);
+
+  const hubOptions = [
+    { id: 'hub-001', name: '860322067669751', location: 'Nursing Station A' },
+    { id: 'hub-002', name: '860322068069456', location: 'Wing B' },
+    { id: 'hub-003', name: '868032061499434', location: 'ICU' },
+    { id: 'hub-004', name: '868032061505230', location: 'Available' },
+    { id: 'hub-005', name: '860322067630076', location: 'Nursing Station B' },
+    { id: 'hub-006', name: '868032061497644', location: 'Wing C' },
+    { id: 'hub-007', name: '860322067642022', location: 'Wing J' }
+  ];
+
+  // Simulate hub connection when hub is selected
+  const handleHubSelection = (hubId: string) => {
+    setSelectedHub(hubId);
+    setHubConnected(false);
+    setHubReady(false);
+    
+    // Simulate connection process
+    setTimeout(() => {
+      setHubConnected(true);
+      setTimeout(() => {
+        setHubReady(true);
+      }, 1500);
+    }, 1000);
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -59,7 +89,7 @@ const ResidentsPage = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <Header />
+        <Header showHub={false} />
 
         {/* Content Area */}
         <div className="flex-1 p-6">

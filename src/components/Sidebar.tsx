@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Users, HelpCircle, Settings } from "lucide-react";
+import { Users, HelpCircle, Settings, LogOut } from "lucide-react";
 import Image from 'next/image';
 const sidebarItems = [
   { icon: Users, label: "Residents", link: "/residents" },
@@ -16,11 +16,11 @@ const Sidebar = () => {
   return (
     <div className="w-20 bg-card border-r border-border flex flex-col items-center py-4 shadow-soft sticky top-0 left-0 h-screen">
       <div className="mb-8">
-        <div className="w-12 h-12">
+        <div className="w-12 h-12 flex justify-center items-center">
           <Image src="/ema-logo.png" alt="ema logo" width={40} height={40} />
         </div>
       </div>
-      <nav className="flex flex-col gap-4">
+      <nav className="flex flex-col gap-4 h-full">
         {sidebarItems.map((item, index) => {
           const isActive =
             pathname === item.link ||
@@ -40,6 +40,9 @@ const Sidebar = () => {
             </button>
           );
         })}
+        <button className="gap-2 mt-auto flex justify-center items-center">
+            <LogOut className="w-6 h-6 text-muted-foreground" onClick={() => {router.push('/')}} />
+        </button>
       </nav>
     </div>
   );

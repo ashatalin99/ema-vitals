@@ -54,21 +54,21 @@ const mockResidents: Resident[] = [
   { id: '7', name: 'Albertson, Florentin', dob: '02-02-2029', location: 'Main 415 - B', exId: '9953' },
 ];
 
-const SingleResidentPage = () => {
+const SingleResident = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [vitals, setVitals] = useState<VitalType[]>([
     { id: 'blood-pressure', name: 'Blood Pressure', color: 'text-red-500', selected: true, observationMethod: 'sitting-left-arm' },
     { id: 'temperature', name: 'Temperature', color: 'text-orange-500', selected: false, observationMethod: 'oral' },
     { id: 'spo2', name: 'SpO2', color: 'text-blue-500', selected: false, observationMethod: 'finger' },
-    { id: 'pain-assessment', name: 'Pain Assessment', color: 'text-pink-500', selected: false, observationMethod: 'visual-scale' },
+    // { id: 'pain-assessment', name: 'Pain Assessment', color: 'text-pink-500', selected: false, observationMethod: 'visual-scale' },
     { id: 'blood-glucose', name: 'Blood Glucose', color: 'text-purple-500', selected: false, observationMethod: 'fingerstick' },
     { id: 'weight', name: 'Weight', color: 'text-orange-500', selected: false, observationMethod: 'standing' },
     { id: 'respiration', name: 'Respiration', color: 'text-blue-500', selected: false, observationMethod: 'visual-count' },
     { id: 'height', name: 'Height', color: 'text-green-500', selected: false, observationMethod: 'standing' },
   ]);
 
-  //const [observationMethod, setObservationMethod] = useState('sitting-left-arm');
+  const [observationMethod, setObservationMethod] = useState('sitting-left-arm');
   const [painLevel, setPainLevel] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [manualDevice, setManualDevice] = useState('');
@@ -396,7 +396,14 @@ type VitalReadings = Record<VitalKey, VitalReading>;
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <Header />
+        <Header 
+          selectedHub={selectedHub}
+          hubOptions={hubOptions}
+          hubConnected={hubConnected}
+          hubReady={hubReady}
+          onHubSelection={handleHubSelection}
+          showHub={true}
+        />
 
         {/* Content Area */}
         <div className="flex-1 p-6">
@@ -419,14 +426,15 @@ type VitalReadings = Record<VitalKey, VitalReading>;
               </div>
             </div>
             <div>
-              {!hubReady && !vitalsSubmitted && (
-                <div className="mb-8 flex items-center justify-between">
+              <div className="mb-8 flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold text-foreground">Select Vitals</h2>
                     <p className="text-muted-foreground">Choose which vitals to measure for this resident</p>
                   </div>
                 </div>
-              )}
+              {/* {!hubReady && !vitalsSubmitted && (
+                
+              )} */}
               
               {/* Vitals Grid */}
               {showVitalsPanel && !vitalsSubmitted && (
@@ -479,54 +487,9 @@ type VitalReadings = Record<VitalKey, VitalReading>;
                   </div>
                 </Card>
               )}
-              
-              {/* Hub Selection Card */}
-              {showVitalsPanel && !vitalsSubmitted && (
-                <Card className="p-6 shadow-medium my-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Select Measurement Hub</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium text-foreground mb-2 block">
-                        Available Hubs
-                      </Label>
-                      <Select value={selectedHub} onValueChange={handleHubSelection}>
-                        <SelectTrigger className="w-full border-border focus:border-border focus-visible:border-border outline-none text-white">
-                          <SelectValue placeholder="Select a measurement hub" />
-                        </SelectTrigger>
-                        <SelectContent className='bg-muted border-border'>
-                          {hubOptions.map((hub) => (
-                            <SelectItem key={hub.id} value={hub.id}>
-                              {hub.name} - {hub.location}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    {selectedHub && (
-                      <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border">
-                        <h4 className="text-sm font-medium text-foreground mb-3">Hub Status</h4>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${hubConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                            <span className="text-sm text-foreground">
-                              {hubConnected ? 'Connected' : 'Connecting...'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${hubReady ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                            <span className="text-sm text-foreground">
-                              {hubReady ? 'Ready to collect vitals' : 'Preparing devices...'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              )}
+
               {/* Pain Assessment Levels */}
-              {showVitalsPanel && !vitalsSubmitted && vitals.find(v => v.id === 'pain-assessment')?.selected && (
+              {/* {showVitalsPanel && !vitalsSubmitted && vitals.find(v => v.id === 'pain-assessment')?.selected && (
                 <Card className="p-6 shadow-medium mt-6 border-border">
                   <h3 className="text-xl font-bold text-foreground">Pain Level Assessment</h3>
                   <div className="mb-6">
@@ -557,26 +520,29 @@ type VitalReadings = Record<VitalKey, VitalReading>;
                     </p>
                   </div>
                 </Card>
-              )}
+              )} */}
              
             </div>
             {/* Action Buttons */}
             {showVitalsPanel && !vitalsSubmitted && (
-              <div className="flex justify-center gap-4 mt-8">
-                <Button 
-                  variant="outline" 
-                  className='border-border text-white px-8 py-3'
-                  onClick={() => router.push('/residents')}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleNext}
-                  className="px-8 py-3 text-lg font-medium bg-primary hover:bg-primary/90"
-                  disabled={!vitals.some(v => v.selected) || !selectedHub || !hubReady}
-                >
-                  Next
-                </Button>
+              <div >
+                <div className='mt-6 mb-4 text-center'><p className='text-blue-500'>Please select hub option in the header</p></div>
+                <div className="flex justify-center gap-4">
+                  <Button 
+                    variant="outline" 
+                    className='border-border text-white px-8 py-3'
+                    onClick={() => router.push('/residents')}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleNext}
+                    className="px-8 py-3 text-lg font-medium bg-primary hover:bg-primary/90"
+                    disabled={!vitals.some(v => v.selected) || !selectedHub || !hubReady}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             )}
             
@@ -807,6 +773,36 @@ type VitalReadings = Record<VitalKey, VitalReading>;
                   </div>
                 )
                 }
+                <Card className="p-6 shadow-medium mt-6 border-border">
+                  <h3 className="text-xl font-bold text-foreground">Pain Level Assessment</h3>
+                  <div className="mb-6">
+                    <Label className="text-lg font-medium text-foreground mb-4 block text-pink-500">
+                      Pain Level: {painLevel !== null ? `${painLevel} - ${painLevels[painLevel].label}` : 'Not Selected'}
+                    </Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 text-white">
+                      {painLevels.map((level) => (
+                        <button
+                          key={level.value}
+                          onClick={() => setPainLevel(level.value)}
+                          className={`p-4 rounded-lg border-2 transition-all duration-200 text-center hover:scale-105 ${
+                            painLevel === level.value 
+                              ? `${level.color} scale-105 shadow-md` 
+                              : 'bg-background border-border hover:bg-muted/50'
+                          }`}
+                        >
+                          <div className="text-3xl mb-2">{level.emoji}</div>
+                          <div className="text-sm font-medium">{level.value}</div>
+                          <div className="text-xs">{level.label}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Select the number that best describes your pain level (0 = No Pain, 10 = Worst Pain)
+                    </p>
+                  </div>
+                </Card>
                 {/* Submit Button - Only show if there are vitals selected or readings */}
                 {(vitals.some(v => v.selected) || Object.keys(vitalReadings).length > 0) && (
                   <div className="flex justify-center mt-8">
@@ -848,6 +844,21 @@ type VitalReadings = Record<VitalKey, VitalReading>;
                 </SelectContent>
               </Select>
             </div>
+            {selectedVitalForEdit && (
+              <div>
+                <Label htmlFor="observation-method">Observation Method</Label>
+                <Select value={observationMethod} onValueChange={setObservationMethod}>
+                  <SelectTrigger className="mt-1 border-border text-white">
+                    <SelectValue className='text-white' placeholder="Select observation method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getObservationMethodOptions(selectedVitalForEdit).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label htmlFor="reading-value">Device Name</Label>
               <Input
@@ -889,6 +900,7 @@ type VitalReadings = Record<VitalKey, VitalReading>;
                   setIsDialogOpen(false);
                   setManualDevice('');
                   setManualReading('');
+                  updateVitalObservationMethod(selectedVitalForEdit, observationMethod);
                   setSelectedVitalForEdit(null);
                 }
               }}>
@@ -902,4 +914,4 @@ type VitalReadings = Record<VitalKey, VitalReading>;
   );
 };
 
-export default SingleResidentPage;
+export default SingleResident;
