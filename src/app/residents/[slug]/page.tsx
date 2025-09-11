@@ -57,6 +57,7 @@ const mockResidents: Resident[] = [
 const SingleResident = () => {
   const router = useRouter();
   const { toast } = useToast();
+  
   const [vitals, setVitals] = useState<VitalType[]>([
     { id: 'blood-pressure', name: 'Blood Pressure', color: 'text-red-500', selected: true, observationMethod: 'sitting-left-arm' },
     { id: 'temperature', name: 'Temperature', color: 'text-orange-500', selected: false, observationMethod: 'oral' },
@@ -310,6 +311,7 @@ type VitalReadings = Record<VitalKey, VitalReading>;
         description: "Please select at least one vital to measure.",
         variant: "destructive",
       });
+      
       return;
     }
     
@@ -330,13 +332,14 @@ type VitalReadings = Record<VitalKey, VitalReading>;
       });
       return;
     }
-
+    
     setVitalsSubmitted(true);
     setShowVitalsPanel(false);
     toast({
       title: "Measurements ready",
       description: "Proceeding to data collection display.",
     });
+    console.log(toast);
   };
 
   const handleSubmit = () => {
@@ -344,6 +347,7 @@ type VitalReadings = Record<VitalKey, VitalReading>;
     const hasError = Math.random() < 0.1; // 10% chance of error for demo
     
     if (hasError) {
+
       toast({
         title: "Submission failed",
         description: "There was an error submitting the vital measurements. Please try again.",
