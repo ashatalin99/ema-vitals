@@ -147,7 +147,7 @@ const Header = ({
               onClick={() => router.push('/devices')}
               className="px-4 bg-primary text white"
             >
-              Select New Device
+              Select Device
             </Button>
           </div>
         </div>
